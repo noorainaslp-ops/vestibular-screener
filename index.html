@@ -1,0 +1,758 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vestibular Symptom Screener</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Source+Sans+3:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#FAF7F1;
+    --surface:#FFFFFF;
+    --surface-alt:#F1ECE0;
+    --ink:#1F2A33;
+    --ink-soft:#5B6670;
+    --teal:#2C6E7F;
+    --teal-dark:#193E47;
+    --teal-tint:#E4EEF0;
+    --amber:#E8A33D;
+    --amber-tint:#FBEEDA;
+    --danger:#B23A2E;
+    --danger-bg:#FBEAE7;
+    --danger-ink:#7A2A21;
+    --radius-lg:20px;
+    --radius-md:14px;
+    --radius-sm:9px;
+    --font-display:'Fraunces', Georgia, serif;
+    --font-body:'Source Sans 3', system-ui, -apple-system, sans-serif;
+    --font-mono:'IBM Plex Mono', ui-monospace, monospace;
+    --shadow-card: 0 1px 2px rgba(31,42,51,0.04), 0 8px 24px rgba(31,42,51,0.07);
+  }
+  *{box-sizing:border-box;}
+  html{-webkit-text-size-adjust:100%;}
+  body{
+    margin:0; min-height:100vh; background:var(--bg); color:var(--ink);
+    font-family:var(--font-body); font-size:18px; line-height:1.5;
+    display:flex; flex-direction:column; align-items:center;
+  }
+  .wrap{ width:100%; max-width:640px; padding:24px 20px 64px; }
+  a{ color:var(--teal-dark); }
+
+  /* ---------- Header / balance-beam progress ---------- */
+  .app-header{ width:100%; max-width:640px; padding:20px 20px 0; }
+  .brand{ display:flex; align-items:baseline; justify-content:space-between; margin-bottom:18px; }
+  .brand-name{ font-family:var(--font-display); font-weight:600; font-size:20px; color:var(--teal-dark); }
+  .brand-tag{ font-family:var(--font-mono); font-size:11px; letter-spacing:.06em; text-transform:uppercase; color:var(--ink-soft); }
+
+  .beam-wrap{ position:relative; height:46px; margin-bottom:6px; }
+  .beam-line{
+    position:absolute; left:0; right:0; top:22px; height:3px; border-radius:3px;
+    background:var(--surface-alt); transform-origin:center; transition:transform .5s cubic-bezier(.4,0,.2,1);
+  }
+  .beam-fill{
+    position:absolute; left:0; top:22px; height:3px; border-radius:3px;
+    background:var(--teal); transition:width .5s cubic-bezier(.4,0,.2,1), transform .5s cubic-bezier(.4,0,.2,1);
+    transform-origin:left center;
+  }
+  .beam-dot{
+    position:absolute; top:14px; width:19px; height:19px; border-radius:50%;
+    background:var(--amber); border:3px solid var(--bg); box-shadow:0 0 0 1px var(--teal);
+    transition:left .5s cubic-bezier(.4,0,.2,1), transform .5s cubic-bezier(.4,0,.2,1);
+    transform:translateX(-50%);
+  }
+  .beam-label{ font-family:var(--font-mono); font-size:12px; color:var(--ink-soft); }
+  @media (prefers-reduced-motion: reduce){
+    .beam-line,.beam-fill,.beam-dot{ transition:none; }
+  }
+
+  /* ---------- Cards ---------- */
+  .card{
+    background:var(--surface); border-radius:var(--radius-lg);
+    box-shadow:var(--shadow-card); padding:32px 28px; margin-top:18px;
+  }
+  .eyebrow{
+    font-family:var(--font-mono); font-size:12px; letter-spacing:.07em; text-transform:uppercase;
+    color:var(--teal); margin:0 0 10px;
+  }
+  h1{ font-family:var(--font-display); font-size:30px; line-height:1.2; margin:0 0 12px; font-weight:600; }
+  h2.q-text{ font-family:var(--font-display); font-size:24px; line-height:1.32; font-weight:600; margin:16px 0 26px; }
+  p{ color:var(--ink-soft); margin:0 0 14px; }
+  p.lede{ font-size:17px; color:var(--ink); }
+
+  .icon-badge{
+    width:64px; height:64px; border-radius:16px; background:var(--teal-tint);
+    display:flex; align-items:center; justify-content:center; color:var(--teal-dark);
+  }
+  .icon-badge svg{ width:34px; height:34px; }
+
+  /* ---------- Buttons ---------- */
+  .btn{
+    display:block; width:100%; text-align:left; font-family:var(--font-body); font-weight:600; font-size:17px;
+    padding:18px 20px; margin-bottom:12px; border-radius:var(--radius-md); border:1.5px solid var(--surface-alt);
+    background:var(--surface); color:var(--ink); cursor:pointer; transition:border-color .15s, background .15s, transform .1s;
+  }
+  .btn:hover{ border-color:var(--teal); background:var(--teal-tint); }
+  .btn:active{ transform:scale(.99); }
+  .btn:focus-visible{ outline:3px solid var(--teal); outline-offset:2px; }
+  .btn .opt-letter{
+    display:inline-block; width:26px; height:26px; border-radius:50%; background:var(--surface-alt);
+    color:var(--ink-soft); font-family:var(--font-mono); font-size:12px; text-align:center; line-height:26px;
+    margin-right:12px;
+  }
+  .btn-primary{
+    background:var(--teal); color:#fff; border-color:var(--teal); text-align:center; font-size:17px;
+  }
+  .btn-primary:hover{ background:var(--teal-dark); border-color:var(--teal-dark); }
+  .btn-ghost{
+    background:transparent; border-color:transparent; color:var(--ink-soft); text-align:center; font-weight:500;
+  }
+  .btn-ghost:hover{ background:var(--surface-alt); border-color:var(--surface-alt); }
+  .btn-danger-outline{
+    background:#fff; border-color:var(--danger); color:var(--danger-ink); text-align:center;
+  }
+  .btn-row{ display:flex; gap:10px; }
+  .btn-row .btn{ margin-bottom:0; }
+
+  .back-link{
+    display:inline-flex; align-items:center; gap:6px; font-family:var(--font-mono); font-size:13px;
+    color:var(--ink-soft); background:none; border:none; cursor:pointer; padding:6px 0; margin-bottom:4px;
+  }
+  .back-link:hover{ color:var(--teal-dark); }
+
+  /* ---------- Intro form ---------- */
+  .field{ margin-bottom:18px; }
+  .field label{ display:block; font-weight:600; font-size:14px; margin-bottom:8px; }
+  .field input, .field select{
+    width:100%; padding:13px 14px; border-radius:var(--radius-sm); border:1.5px solid var(--surface-alt);
+    font-family:var(--font-body); font-size:16px; background:var(--surface); color:var(--ink);
+  }
+  .field input:focus, .field select:focus{ outline:3px solid var(--teal); outline-offset:1px; border-color:var(--teal); }
+
+  .disclaimer{
+    background:var(--surface-alt); border-radius:var(--radius-md); padding:16px 18px; font-size:14.5px;
+    color:var(--ink-soft); margin-top:20px;
+  }
+  .disclaimer strong{ color:var(--ink); }
+
+  /* ---------- Vascular alert ---------- */
+  .alert-card{
+    background:var(--danger-bg); border:1.5px solid #E7B7AF; border-radius:var(--radius-lg);
+    padding:32px 28px; margin-top:18px;
+  }
+  .alert-card h1{ color:var(--danger-ink); }
+  .alert-card p{ color:var(--danger-ink); }
+  .alert-icon{ width:56px; height:56px; color:var(--danger); margin-bottom:14px; }
+
+  /* ---------- Results ---------- */
+  .result-block{
+    border-radius:var(--radius-md); padding:22px 22px; margin-bottom:16px; border:1.5px solid var(--surface-alt);
+  }
+  .result-block.primary{ border-color:var(--teal); background:var(--teal-tint); }
+  .result-rank{ font-family:var(--font-mono); font-size:12px; text-transform:uppercase; letter-spacing:.06em; color:var(--teal-dark); }
+  .result-name{ font-family:var(--font-display); font-size:24px; font-weight:600; margin:4px 0 10px; }
+  .result-score{ font-family:var(--font-mono); font-size:13px; color:var(--ink-soft); margin-bottom:10px; }
+  .result-desc{ font-size:15.5px; color:var(--ink); }
+
+  details{ margin-top:20px; }
+  summary{ cursor:pointer; font-weight:600; font-size:14.5px; color:var(--teal-dark); }
+  .score-table{ width:100%; border-collapse:collapse; margin-top:14px; font-size:14.5px; }
+  .score-table td{ padding:7px 4px; border-bottom:1px solid var(--surface-alt); }
+  .score-table td:last-child{ text-align:right; font-family:var(--font-mono); }
+
+  footer{ text-align:center; font-size:13px; color:var(--ink-soft); margin-top:34px; line-height:1.7; }
+  footer a{ color:var(--ink-soft); text-decoration:underline; }
+
+  .visually-hidden{ position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); }
+</style>
+</head>
+<body>
+
+<!-- SVG icon sprite: simple original line-icons (not reproductions of the source paper's artwork) -->
+<svg class="visually-hidden" aria-hidden="true">
+  <defs>
+    <symbol id="i-context" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="12" cy="12" r="8"/><path d="M12 8v4l3 2"/>
+    </symbol>
+    <symbol id="i-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M4 12a8 8 0 0 1 8-8"/><path d="M20 12a8 8 0 0 1-8 8"/>
+      <path d="M4 12l-2-2M4 12l2 2"/><path d="M20 12l2-2M20 12l-2 2"/>
+    </symbol>
+    <symbol id="i-clock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 1.8"/>
+    </symbol>
+    <symbol id="i-trigger" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M12 3v6"/><path d="M8 6l4 3 4-3"/><circle cx="12" cy="15" r="6"/>
+    </symbol>
+    <symbol id="i-alert" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M12 3.5 2 20h20L12 3.5Z"/><path d="M12 10v4.5"/><circle cx="12" cy="17.2" r=".4" fill="currentColor" stroke="none"/>
+    </symbol>
+    <symbol id="i-heart" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M12 20s-7.5-4.6-9.7-9.3C.7 7.1 2.5 4 5.8 4c2 0 3.4 1.1 4.2 2.4C10.8 5.1 12.2 4 14.2 4c3.3 0 5.1 3.1 3.5 6.7C15.5 15.4 12 20 12 20Z"/>
+    </symbol>
+    <symbol id="i-balance" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M12 3v18"/><path d="M4 8h16"/><path d="M4 8l-2 5h6l-2-5"/><path d="M20 8l-2 5h6l-2-5"/>
+    </symbol>
+    <symbol id="i-eye" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M2 12s3.8-6.5 10-6.5S22 12 22 12s-3.8 6.5-10 6.5S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/>
+    </symbol>
+    <symbol id="i-ear" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M9 5a5 5 0 0 1 5 5c0 2.2-1.2 2.9-2 4-1 1.3-1 2.7 0 3.5 1 .8 2.7.4 3-1.3"/>
+      <path d="M9 5C5.5 5 3 8 3 11.5S5.5 18 9 18"/>
+    </symbol>
+    <symbol id="i-bed" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M2 18v-6a2 2 0 0 1 2-2h5"/><path d="M2 18v2"/><path d="M22 18v2"/>
+      <path d="M2 15h20v-1a3 3 0 0 0-3-3h-6a2 2 0 0 0-2 2"/><circle cx="6" cy="9" r="1.6"/>
+    </symbol>
+    <symbol id="i-tilt" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="9" cy="7" r="2.6"/><path d="M11 9.5l4 3-1.5 5"/><path d="M9.5 10l-.5 4 3 3.5"/>
+    </symbol>
+    <symbol id="i-headache" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M12 3a7 7 0 0 0-7 7c0 2.6 1.3 4 2 5v3h10v-3c.7-1 2-2.4 2-5a7 7 0 0 0-7-7Z"/>
+      <path d="M9.5 20.5h5"/><path d="M11 9l-1.5 2 2 1-1.5 2"/>
+    </symbol>
+    <symbol id="i-vest" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="12" cy="5" r="2.4"/><path d="M6 21l2-9 4 2 4-2 2 9"/><path d="M9 12l3-2 3 2"/>
+    </symbol>
+    <symbol id="i-stand" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="12" cy="4" r="2"/><path d="M12 6v7"/><path d="M8 21l4-8 4 8"/><path d="M9 10h6"/>
+      <path d="M4 16l3-2"/><path d="M20 16l-3-2"/>
+    </symbol>
+    <symbol id="i-pill" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+      <rect x="3" y="9" width="18" height="6" rx="3" transform="rotate(-30 12 12)"/><path d="M12 8.5 15.5 15.5" />
+    </symbol>
+    <symbol id="i-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M4 12l5 5L20 6"/>
+    </symbol>
+  </defs>
+</svg>
+
+<div class="app-header">
+  <div class="brand">
+    <div class="brand-name">Vestibular Symptom Screener</div>
+    <div class="brand-tag">Pilot demo</div>
+  </div>
+  <div class="beam-wrap" id="beamWrap" aria-hidden="true">
+    <div class="beam-line"></div>
+    <div class="beam-fill" id="beamFill" style="width:0%"></div>
+    <div class="beam-dot" id="beamDot" style="left:0%"></div>
+  </div>
+  <div class="beam-label" id="beamLabel">Not started</div>
+</div>
+
+<div class="wrap" id="app" role="main"></div>
+
+<script>
+/* =========================================================================
+   QUESTIONS
+   -------------------------------------------------------------------------
+   UPDATED: wording below is now drawn from the paper's own supplementary
+   questionnaire PDF (41598_2026_53480_MOESM1_ESM), which lists the 50
+   items and their answer options but -- crucially -- does NOT label them
+   with Q01..Q50 indices. The scoring engine (rules.js below) keys purely
+   off index + answer-code (1/2/3), per scoring.py/postprocessing.py in
+   the companion repo, so each real question below has been placed at the
+   Q-slot whose documented rule-role it matches by content.
+
+   CONFIDENCE NOTES (read before treating this as verified):
+   - Q03, Q06-Q13, Q20-Q25, Q41, Q42, Q45, Q46 -- high confidence: clear
+     content match, and/or the rule only needs correct SET membership
+     (unordered "count of Yes in this block"), not the exact sub-index.
+   - Q04, Q14-Q19, Q26-Q38, Q43, Q44, Q47-Q50 -- medium confidence:
+     content matched by category and best-guess order. A few
+     postprocessing rules select specific sub-indices *within* a block
+     (e.g. only some headache items feed the vestibular-migraine
+     acceptance rule) rather than treating the whole block symmetrically,
+     so getting every single index exactly right would require the
+     paper's own Q01-Q50 codebook, which this PDF doesn't include.
+   - Q02, Q05, Q39, Q40 -- no confident match found in the supplementary
+     PDF; left as the original reconstructed placeholder text.
+   Treat this build as a substantial accuracy improvement over the prior
+   fully-reconstructed wording, not as a verified official reproduction.
+========================================================================= */
+const QUESTIONS = [
+  // ---- Universal set (context / character / duration / trigger) --------
+  { id:'Q01', cat:'context', icon:'i-context', type:'choice2',
+    text:"Did you experience severe dizziness just once, or has it occurred more than twice?",
+    options:["Only once","Repeated 2 or more times"] },
+  { id:'Q02', cat:'context', icon:'i-clock', type:'yesno',
+    text:"Is your dizziness constant \u2014 present nearly every day \u2014 rather than happening in separate, distinct episodes? (reconstructed \u2014 no match in supplementary PDF)" },
+  { id:'Q03', cat:'context', icon:'i-spin', type:'choice3',
+    text:"In the most severe cases of dizziness, which of the following does the feeling most closely resemble?",
+    options:["Spinning in circles","Staggering and swaying","Blurry"] },
+  { id:'Q04', cat:'context', icon:'i-clock', type:'choice3',
+    text:"How long does the severe dizziness usually last?",
+    options:["Less than 60 seconds","10 minutes up to about 12 hours","More than 12 hours (up to several days)"] },
+  { id:'Q05', cat:'context', icon:'i-trigger', type:'choice3',
+    text:"How does your dizziness usually begin? (reconstructed \u2014 no match in supplementary PDF)",
+    options:["Suddenly, out of nowhere, in a brief attack","When I move or turn my head","Gradually, especially when I stand up or change position"] },
+
+  // ---- Vascular safety screen (evaluated immediately after Q13) --------
+  { id:'Q06', cat:'vascular', icon:'i-alert', type:'yesno',
+    text:"When dizzy, do you feel especially weak in one arm or leg compared to the other?" },
+  { id:'Q07', cat:'vascular', icon:'i-alert', type:'yesno',
+    text:"When dizzy, do you notice a particularly reduced sensation in one arm or leg compared to the other?" },
+  { id:'Q08', cat:'vascular', icon:'i-alert', type:'yesno',
+    text:"Do you find it difficult to speak clearly?" },
+  { id:'Q09', cat:'vascular', icon:'i-headache', type:'yesno',
+    text:"Has swallowing food become more uncomfortable than before?" },
+  { id:'Q10', cat:'vascular', icon:'i-balance', type:'yesno',
+    text:"When dizzy, is it hard to maintain your balance to the point of falling off a chair?" },
+  { id:'Q11', cat:'vascular', icon:'i-heart', type:'yesno',
+    text:"Have you ever been diagnosed with high blood pressure?" },
+  { id:'Q12', cat:'vascular', icon:'i-heart', type:'yesno',
+    text:"Have you ever been diagnosed with diabetes?" },
+  { id:'Q13', cat:'vascular', icon:'i-alert', type:'yesno',
+    text:"When dizzy, do you ever see double?" },
+
+  // ---- Chronic / motion & visual sensitivity cluster (PPPD-leaning) ----
+  { id:'Q14', cat:'chronic', icon:'i-balance', type:'yesno',
+    text:"Does consistent dizziness make everyday activities (like shopping, work, etc.) difficult?" },
+  { id:'Q15', cat:'chronic', icon:'i-eye', type:'yesno',
+    text:"Does dizziness worsen when looking at complex patterns or rapidly moving objects?" },
+  { id:'Q16', cat:'chronic', icon:'i-trigger', type:'yesno',
+    text:"Does dizziness worsen when standing straight, walking, or moving?" },
+  { id:'Q17', cat:'chronic', icon:'i-stand', type:'yesno',
+    text:"Before the onset of consistent dizziness, was there any illness or particular event that could have caused it?" },
+  { id:'Q18', cat:'chronic', icon:'i-clock', type:'yesno',
+    text:"Have you been consistently dizzy every day for more than three months?" },
+  { id:'Q19', cat:'chronic', icon:'i-eye', type:'yesno',
+    text:"Does dizziness worsen when riding in vehicles or other forms of transportation?" },
+
+  // ---- Meniere's-leaning ear symptoms ------------------------------------
+  { id:'Q20', cat:'ear', icon:'i-ear', type:'yesno',
+    text:"When very dizzy, do you hear less in one ear?" },
+  { id:'Q21', cat:'ear', icon:'i-ear', type:'yesno',
+    text:"When very dizzy, do you hear a louder 'beep' or 'hum' sound in one ear?" },
+  { id:'Q22', cat:'ear', icon:'i-ear', type:'yesno',
+    text:"When very dizzy, does one ear feel more blocked?" },
+
+  // ---- BPPV positional triggers -----------------------------------------
+  { id:'Q23', cat:'positional', icon:'i-bed', type:'yesno',
+    text:"Does turning over while lying down make the dizziness worse?" },
+  { id:'Q24', cat:'positional', icon:'i-tilt', type:'yesno',
+    text:"Does lying down from a sitting position make the dizziness worse?" },
+
+  // ---- Headache / vestibular migraine block (gated by Q25) --------------
+  { id:'Q25', cat:'headache', icon:'i-headache', type:'yesno',
+    text:"Do you experience headaches?" },
+  { id:'Q26', cat:'headache', icon:'i-headache', type:'choice3',
+    text:"How often do you get headaches when dizzy?",
+    options:["Almost always","About half","Occasionally"] },
+  { id:'Q27', cat:'headache', icon:'i-eye', type:'yesno',
+    text:"When dizzy, are you bothered by bright lights?" },
+  { id:'Q28', cat:'headache', icon:'i-ear', type:'yesno',
+    text:"When dizzy, are you bothered by loud noises?" },
+  { id:'Q29', cat:'headache', icon:'i-eye', type:'yesno',
+    text:"When dizzy, do you see twinkling stars?" },
+  { id:'Q30', cat:'headache', icon:'i-clock', type:'choice3',
+    text:"How long do your headaches usually last?",
+    options:["4 hours or less","4 hours to 3 days","3 or more days"] },
+  { id:'Q31', cat:'headache', icon:'i-headache', type:'yesno',
+    text:"Do your headaches occur mainly on one side of your head?" },
+  { id:'Q32', cat:'headache', icon:'i-headache', type:'yesno',
+    text:"Do your headaches throb?" },
+  { id:'Q33', cat:'headache', icon:'i-headache', type:'choice3',
+    text:"How intense are your headaches?",
+    options:["Unable to perform daily activities","Sometimes I have to take pain medication or take a nap","No problems with daily activities"] },
+  { id:'Q34', cat:'headache', icon:'i-trigger', type:'yesno',
+    text:"When you have a headache, does it worsen if you climb 2-3 flights of stairs?" },
+  { id:'Q35', cat:'headache', icon:'i-headache', type:'yesno',
+    text:"When you have a headache, do you feel like vomiting or have you actually vomited?" },
+  { id:'Q36', cat:'headache', icon:'i-eye', type:'yesno',
+    text:"When you have a headache, are you bothered by bright lights?" },
+  { id:'Q37', cat:'headache', icon:'i-ear', type:'yesno',
+    text:"When you have a headache, are you bothered by loud noises?" },
+  { id:'Q38', cat:'headache', icon:'i-headache', type:'choice2',
+    text:"How many times in your life have you had headaches like the ones described above?",
+    options:["More than 5 times in my life","No more than 4 times in my lifetime"] },
+  { id:'Q39', cat:'headache', icon:'i-trigger', type:'yesno',
+    text:"Are your dizzy spells sometimes triggered by specific foods, stress, poor sleep, or hormonal changes? (reconstructed \u2014 no match in supplementary PDF)" },
+  { id:'Q40', cat:'headache', icon:'i-trigger', type:'yesno',
+    text:"Do you have a personal or family history of motion sickness since childhood? (reconstructed \u2014 no match in supplementary PDF)" },
+
+  // ---- Peripheral vestibulopathy (VEST) specific -------------------------
+  { id:'Q41', cat:'vest', icon:'i-vest', type:'yesno',
+    text:"Do you find it difficult to maintain your balance when standing straight, walking, or moving?" },
+  { id:'Q42', cat:'vest', icon:'i-eye', type:'yesno',
+    text:"When walking and looking at signs, do the letters appear to shake?" },
+  { id:'Q43', cat:'vest', icon:'i-ear', type:'yesno',
+    text:"Is it more difficult to maintain your balance in dark places or on uneven ground?" },
+  { id:'Q44', cat:'vest', icon:'i-pill', type:'yesno',
+    text:"Do you feel dizzy even when sitting still or lying down?" },
+
+  // ---- Orthostatic dizziness (OH) specific -------------------------------
+  { id:'Q45', cat:'orthostatic', icon:'i-stand', type:'yesno',
+    text:"Do you feel dizzy when suddenly standing up after sitting for a long time?" },
+  { id:'Q46', cat:'orthostatic', icon:'i-clock', type:'yesno',
+    text:"Does the dizziness decrease if you sit or lie down again?" },
+  { id:'Q47', cat:'orthostatic', icon:'i-heart', type:'yesno',
+    text:"When dizzy, does your heart beat rapidly?" },
+  { id:'Q48', cat:'orthostatic', icon:'i-stand', type:'yesno',
+    text:"When dizzy, do you feel a lack of strength throughout your body?" },
+  { id:'Q49', cat:'orthostatic', icon:'i-pill', type:'yesno',
+    text:"When dizzy, is it difficult to concentrate on complex thoughts?" },
+  { id:'Q50', cat:'orthostatic', icon:'i-heart', type:'yesno',
+    text:"When dizzy, does your vision become blurry?" },
+];
+
+const CATEGORY_LABEL = {
+  context:'General', vascular:'Safety check', chronic:'Chronic pattern', ear:'Ear symptoms',
+  positional:'Positional trigger', headache:'Headache history', vest:'Balance history', orthostatic:'Standing / posture',
+};
+
+/* =========================================================================
+   RULES ENGINE
+   -------------------------------------------------------------------------
+   Direct port of scoring.py / postprocessing.py / vascular.py from
+   github.com/cecy07/vestibular-classifier (MIT licensed, companion code
+   to the paper). Coefficients below match configs/coefficients.yaml
+   exactly; rule logic matches the Python control flow exactly, including
+   its order-dependence.
+========================================================================= */
+const COEFF = {
+  xBPPV_1:28, xBPPV_2:19, xBPPV_3:22, xBPPV_4:58,
+  xMD_1:80, xMD_2:72, xMD_3:99, xMD_4:71, xMD_5:48,
+  xVM_1:9, xVM_2:53, xVM_3:2, xVM_4:3, xVM_5:77, xVM_6:94,
+  xPPPD_1:3, xPPPD_2:2, xPPPD_3:2, xPPPD_4:38, xPPPD_5:8,
+  xVEST_1:2, xVEST_2:23, xVEST_3:90, xVEST_4:44, xVEST_5:31, xVEST_6:16, xVEST_7:2,
+  xOH_1:3, xOH_2:5,
+};
+
+const DX_CLASSES = ['BPPV','MD','VM','PPPD','VEST','OH'];
+const DX_LABEL = {
+  BPPV:"Benign Paroxysmal Positional Vertigo (BPPV)",
+  MD:"Meniere's Disease",
+  VM:"Vestibular Migraine",
+  PPPD:"Persistent Postural-Perceptual Dizziness (PPPD)",
+  VEST:"Vestibulopathy (inner-ear balance disorder)",
+  OH:"Orthostatic Dizziness",
+};
+const DX_DESC = {
+  BPPV:"Brief, intense spinning triggered by specific head movements \u2014 rolling over in bed, tilting your head back, or bending down \u2014 caused by loose calcium crystals in the inner ear. Often very treatable with a short in-office repositioning maneuver.",
+  MD:"Episodes of vertigo lasting 20 minutes to several hours, together with fluctuating hearing loss, tinnitus (ringing), and a feeling of fullness in one ear. Related to fluid pressure changes in the inner ear.",
+  VM:"Dizziness or vertigo occurring together with, or independently of, migraine headaches \u2014 often with light or sound sensitivity, and sometimes visual aura. One of the most common causes of recurrent dizziness.",
+  PPPD:"A chronic (3+ months) feeling of unsteadiness or rocking that's worse in busy visual environments, with movement, or when upright \u2014 often develops after an initial vestibular event, even after that event has resolved.",
+  VEST:"Reduced function of the balance organ in one or both inner ears \u2014 can follow a viral illness (vestibular neuritis) or certain medications, and typically causes unsteadiness that's worse in the dark or with eyes closed.",
+  OH:"A drop in blood pressure on standing, causing lightheadedness or a near-fainting feeling that improves quickly when sitting or lying down. Can relate to medications, dehydration, or an underlying condition.",
+};
+
+function scoreSubject(a){ // a = answers object, e.g. {Q01:1, Q02:2, ...} (1-indexed option values)
+  let w = { BPPV:1.0, MD:1.0, VM:1.0, PPPD:1.0, VEST:1.0, OH:1.0 };
+  const yes = (q)=> a[q]===1;
+  const cnt = (qs)=> qs.reduce((s,q)=> s + (yes(q)?1:0), 0);
+
+  if(a.Q03===1) w.BPPV *= COEFF.xBPPV_1;
+
+  if(a.Q04===1){ w.BPPV*=COEFF.xBPPV_2; w.MD*=COEFF.xMD_1; w.VM*=COEFF.xVM_1; w.VEST*=COEFF.xVEST_1; }
+  else if(a.Q04===2){ w.MD*=COEFF.xMD_2; w.VM*=COEFF.xVM_2; w.VEST*=COEFF.xVEST_2; }
+  else if(a.Q04===3){ w.MD*=COEFF.xMD_3; w.VM*=COEFF.xVM_3; w.PPPD*=COEFF.xPPPD_1; w.VEST*=COEFF.xVEST_3; }
+
+  if(a.Q05===1){ w.BPPV*=COEFF.xBPPV_3; w.MD*=COEFF.xMD_4; w.VM*=COEFF.xVM_4; w.PPPD*=COEFF.xPPPD_2; w.VEST*=COEFF.xVEST_4; }
+  else if(a.Q05===2){ w.PPPD*=COEFF.xPPPD_3; w.VEST*=COEFF.xVEST_5; }
+  else if(a.Q05===3){ w.PPPD*=COEFF.xPPPD_4; w.VEST*=COEFF.xVEST_6; w.OH*=COEFF.xOH_1; }
+
+  const nPPPD = cnt(['Q14','Q15','Q16','Q17','Q18','Q19']);
+  w.PPPD *= COEFF.xPPPD_5 * nPPPD;
+
+  const nMD = cnt(['Q20','Q21','Q22']);
+  w.MD *= COEFF.xMD_5 * nMD;
+
+  const nBPPV = cnt(['Q23','Q24']);
+  w.BPPV *= COEFF.xBPPV_4 * nBPPV;
+
+  if(a.Q25===2){ w.VM /= COEFF.xVM_5; }
+  else if(a.Q25===1){
+    const nVM = cnt(['Q26','Q27','Q28','Q29']) + cnt(['Q31','Q32','Q33','Q34','Q35','Q36','Q37','Q38','Q39']);
+    w.VM *= COEFF.xVM_6 * nVM;
+  }
+
+  const nVEST = cnt(['Q41','Q42','Q43','Q44']);
+  w.VEST *= COEFF.xVEST_7 * nVEST;
+
+  const nOH = cnt(['Q45','Q46','Q47','Q48','Q49','Q50']);
+  w.OH *= COEFF.xOH_2 * nOH;
+
+  const raw = DX_CLASSES.map(c=>w[c]);
+  const total = raw.reduce((s,v)=>s+v,0);
+  const pct = total>0 ? raw.map(v=>Math.round(v/total*100)) : raw.map(()=>0);
+
+  const order = DX_CLASSES.map((c,i)=>[c,pct[i]]).sort((x,y)=>y[1]-x[1]);
+  return {
+    dx1: order[0][0], dx2: order[1][0],
+    scores: Object.fromEntries(DX_CLASSES.map((c,i)=>[c,pct[i]])),
+    ranked: order,
+  };
+}
+
+function applyPostprocessing(a, dx1, dx2){
+  let d1 = dx1, d2 = dx2;
+  const yes=(q)=>a[q]===1, no=(q)=>a[q]===2;
+  const clear=(dx)=>{ if(d1===dx) d1=''; if(d2===dx) d2=''; };
+  const insert=(dx, atTop=false)=>{
+    if(d1===dx || d2===dx) return;
+    if(d1===''){ d1=dx; }
+    else if(d2===''){ d2=dx; }
+    else if(atTop){ d2=d1; d1=dx; }
+    else { d2=dx; }
+  };
+  const cntNo=(qs)=> qs.reduce((s,q)=>s+(no(q)?1:0),0);
+  const cntYes=(qs)=> qs.reduce((s,q)=>s+(yes(q)?1:0),0);
+
+  // --- Rejections (fixed order) ---
+  if(cntNo(['Q14','Q15','Q16','Q17','Q18','Q19','Q20']) >= 4) clear('PPPD');
+
+  if(a.Q03!==2 && a.Q04!==1 && a.Q20!==1 && a.Q21!==1 && a.Q22!==1) clear('MD');
+
+  if(d2==='MD'){
+    const q20=a.Q20, q21=a.Q21, q22=a.Q22;
+    const singleYes = (q20===1&&q21===2&&q22===2)||(q20===2&&q21===1&&q22===2)||(q20===2&&q21===2&&q22===1);
+    if(singleYes) d2='';
+  }
+
+  if(d1==='OH' && d2==='VM') d2='';
+
+  if(cntYes(['Q25','Q27','Q28','Q29','Q32','Q33','Q35','Q36','Q37','Q38']) < 3) clear('VM');
+
+  if(no('Q14') && no('Q15')) clear('VEST');
+
+  if(yes('Q45') && yes('Q47') && yes('Q48')) clear('OH');
+
+  // --- Promote empty Dx1 <- Dx2 ---
+  if(d1===''){ d1=d2; d2=''; }
+
+  // --- Acceptances (fixed order) ---
+  if(cntYes(['Q35','Q37','Q38','Q28','Q32']) >= 3) insert('VM');
+
+  if((a.Q05===1 || a.Q05===2) && a.Q04!==3) insert('VEST');
+
+  if(a.Q02===2 && yes('Q15') && yes('Q16') && yes('Q17') && yes('Q18')) insert('PPPD');
+
+  if(yes('Q45') && yes('Q47') && yes('Q48') && a.Q05!==3 && a.Q04===1) insert('OH');
+
+  {
+    const c = (a.Q05===1?1:0) + (yes('Q23')?1:0) + (yes('Q24')?1:0);
+    if(c >= 2) insert('BPPV', true);
+  }
+
+  return { dx1: d1, dx2: d2 };
+}
+
+function vascularScreen(a){
+  // Eq. 1 of the paper: fires when >= threshold of these are "Yes".
+  const qs = ['Q06','Q07','Q08','Q13'];
+  const count = qs.reduce((s,q)=> s + (a[q]===1?1:0), 0);
+  return { flagged: count >= 2, count };
+}
+
+function classify(a){
+  const scored = scoreSubject(a);
+  const post = applyPostprocessing(a, scored.dx1, scored.dx2);
+  return { ...scored, dx1Final: post.dx1, dx2Final: post.dx2 };
+}
+
+/* =========================================================================
+   APP CONTROLLER
+========================================================================= */
+const state = { screen:'intro', qIndex:0, answers:{}, age:null, vascularSeen:false, vascularFlagged:false };
+
+const VASC_LAST_INDEX = QUESTIONS.findIndex(q=>q.id==='Q13'); // interrupt check happens right after this
+
+function iconSvg(id, size=34){
+  return `<svg width="${size}" height="${size}" viewBox="0 0 24 24"><use href="#${id}"/></svg>`;
+}
+
+function updateBeam(){
+  const wrap=document.getElementById('beamWrap'), fill=document.getElementById('beamFill'),
+        dot=document.getElementById('beamDot'), label=document.getElementById('beamLabel');
+  let frac=0, text='Not started';
+  if(state.screen==='question'){
+    frac = state.qIndex/QUESTIONS.length;
+    text = `Question ${state.qIndex+1} of ${QUESTIONS.length}`;
+  } else if(state.screen==='results'){
+    frac = 1; text = 'Complete';
+  } else if(state.screen==='vascular-alert'){
+    frac = (VASC_LAST_INDEX+1)/QUESTIONS.length; text='Safety check';
+  }
+  fill.style.width = (frac*100)+'%';
+  dot.style.left = (frac*100)+'%';
+  const tilt = -6 * (1-frac);
+  wrap.querySelector('.beam-line').style.transform = `rotate(${tilt}deg)`;
+  fill.style.transform = `rotate(${tilt}deg)`;
+  label.textContent = text;
+}
+
+function render(){
+  updateBeam();
+  const app = document.getElementById('app');
+  if(state.screen==='intro') return renderIntro(app);
+  if(state.screen==='question') return renderQuestion(app);
+  if(state.screen==='vascular-alert') return renderVascularAlert(app);
+  if(state.screen==='results') return renderResults(app);
+}
+
+function renderIntro(app){
+  app.innerHTML = `
+    <div class="card">
+      <p class="eyebrow">Before you begin</p>
+      <h1>A quick screen for common dizziness &amp; balance disorders</h1>
+      <p class="lede">This takes about 7\u201310 minutes. Answer based on your usual pattern of symptoms \u2014 there are no wrong answers.</p>
+      <div class="field">
+        <label for="ageInput">Your age</label>
+        <input type="number" id="ageInput" min="1" max="120" inputmode="numeric" placeholder="e.g. 62">
+      </div>
+      <button class="btn btn-primary" id="startBtn">Start the screener</button>
+      <div class="disclaimer">
+        <strong>This tool does not diagnose you.</strong> It's a self-report screening aid, based on the published
+        rule-based algorithm from Ryu et&nbsp;al., <em>Scientific Reports</em> (2026), that suggests which conditions
+        are worth discussing with a clinician. It cannot replace an in-person examination, and if any answer suggests
+        a possible stroke-related cause, seek emergency care immediately rather than relying on this tool.
+      </div>
+    </div>
+  `;
+  document.getElementById('startBtn').addEventListener('click', ()=>{
+    const ageVal = parseInt(document.getElementById('ageInput').value, 10);
+    state.age = isNaN(ageVal) ? null : ageVal;
+    state.screen='question'; state.qIndex=0; render();
+  });
+}
+
+function renderQuestion(app){
+  const q = QUESTIONS[state.qIndex];
+  const options = q.type==='yesno' ? ['Yes','No'] : q.options;
+  const letters = ['A','B','C'];
+  app.innerHTML = `
+    <button class="back-link" id="backBtn" ${state.qIndex===0?'style="visibility:hidden"':''}>&larr; Back</button>
+    <div class="card">
+      <p class="eyebrow">${CATEGORY_LABEL[q.cat]} \u00b7 ${q.id}</p>
+      <div class="icon-badge">${iconSvg(q.icon)}</div>
+      <h2 class="q-text">${q.text}</h2>
+      <div id="optWrap">
+        ${options.map((opt,i)=>`
+          <button class="btn opt-btn" data-val="${i+1}">
+            <span class="opt-letter">${letters[i]}</span>${opt}
+          </button>`).join('')}
+      </div>
+    </div>
+  `;
+  document.querySelectorAll('.opt-btn').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      state.answers[q.id] = parseInt(btn.dataset.val,10);
+      advance();
+    });
+  });
+  if(state.qIndex>0){
+    document.getElementById('backBtn').addEventListener('click', ()=>{
+      state.qIndex = Math.max(0, state.qIndex-1);
+      render();
+    });
+  }
+}
+
+function advance(){
+  if(state.qIndex === VASC_LAST_INDEX){
+    const v = vascularScreen(state.answers);
+    state.vascularFlagged = v.flagged;
+    if(v.flagged && !state.vascularSeen){
+      state.vascularSeen = true;
+      state.screen='vascular-alert';
+      return render();
+    }
+  }
+  if(state.qIndex < QUESTIONS.length-1){
+    state.qIndex += 1;
+    render();
+  } else {
+    state.screen='results';
+    render();
+  }
+}
+
+function renderVascularAlert(app){
+  app.innerHTML = `
+    <div class="alert-card">
+      ${iconSvg('i-alert', 56).replace('<svg ', '<svg class="alert-icon" ')}
+      <h1>Please seek medical care promptly</h1>
+      <p>Your answers to the safety questions include patterns that can, in rare cases, indicate a
+      stroke-related cause of dizziness \u2014 which needs urgent evaluation. This is most often not the case,
+      but it can't be ruled out by a questionnaire alone.</p>
+      <p><strong>If you have new weakness, numbness, slurred speech, double vision, or the worst headache of your
+      life right now, call your local emergency number or go to an emergency room immediately.</strong></p>
+      <div class="btn-row" style="margin-top:22px;">
+        <button class="btn btn-danger-outline" id="exitBtn">Exit \u2014 I'll seek care now</button>
+      </div>
+      <button class="btn btn-ghost" id="continueBtn" style="margin-top:8px;">Continue the screener anyway (for information only)</button>
+    </div>
+  `;
+  document.getElementById('exitBtn').addEventListener('click', ()=>{
+    document.getElementById('app').innerHTML = `
+      <div class="card"><h1>Take care</h1>
+      <p class="lede">Please contact emergency services or go to your nearest emergency room now. You can return to this screener later if you'd like.</p></div>`;
+  });
+  document.getElementById('continueBtn').addEventListener('click', ()=>{
+    if(state.qIndex < QUESTIONS.length-1){ state.qIndex += 1; state.screen='question'; render(); }
+    else { state.screen='results'; render(); }
+  });
+}
+
+function renderResults(app){
+  const result = classify(state.answers);
+  const dx1 = result.dx1Final, dx2 = result.dx2Final;
+  const vascNote = state.vascularFlagged ? `
+    <div class="disclaimer" style="background:var(--danger-bg); color:var(--danger-ink); margin-bottom:20px;">
+      <strong>Reminder:</strong> your answers earlier flagged possible stroke-related warning signs.
+      Please still seek prompt in-person medical evaluation regardless of the results below.
+    </div>` : '';
+
+  const blocks = [dx1, dx2].filter(Boolean).map((dx,i)=>`
+    <div class="result-block ${i===0?'primary':''}">
+      <div class="result-rank">${i===0?'Most likely':'Also worth discussing'}</div>
+      <div class="result-name">${DX_LABEL[dx]}</div>
+      <div class="result-score">Matches ${result.scores[dx]}% of ${dx} criteria in this screen</div>
+      <div class="result-desc">${DX_DESC[dx]}</div>
+    </div>`).join('');
+
+  const allScoresRows = result.ranked.map(([c,s])=>`
+    <tr><td>${DX_LABEL[c]}</td><td>${s}%</td></tr>`).join('');
+
+  app.innerHTML = `
+    <div class="card">
+      <p class="eyebrow">Your results</p>
+      <h1>Two conditions worth discussing with a clinician</h1>
+      ${vascNote}
+      ${blocks || '<p>No clear pattern emerged from your answers \u2014 please discuss your symptoms with a clinician directly.</p>'}
+      <details>
+        <summary>View all six scores</summary>
+        <table class="score-table">${allScoresRows}</table>
+      </details>
+      <div class="disclaimer" style="margin-top:24px;">
+        <strong>This result is computer-generated from a symptom questionnaire and may not be accurate.</strong>
+        It is not a diagnosis. Please see a doctor \u2014 or an emergency room if symptoms are severe or sudden \u2014
+        for an accurate evaluation. In the pilot study this algorithm was based on (n=86 patients), its top-two
+        output matched an expert otologist's diagnosis 82.1% of the time; individual disorders varied in accuracy,
+        and the study's own authors note it still needs external, multi-center validation before clinical use.
+      </div>
+      <button class="btn btn-ghost" id="restartBtn" style="margin-top:18px;">Start over</button>
+    </div>
+  `;
+  document.getElementById('restartBtn').addEventListener('click', ()=>{
+    state.screen='intro'; state.qIndex=0; state.answers={}; state.vascularSeen=false; state.vascularFlagged=false;
+    render();
+  });
+}
+
+render();
+</script>
+
+<footer>
+  Based on the rule-based algorithm published in Ryu, H.T., Callejas&nbsp;Pastor, C.A., Joo, J.S., Ku, Y. &amp; Suh, M.-W.
+  &ldquo;A rule-based mobile screening classifier for six ICVD-defined vestibular disorders: a pilot study,&rdquo;
+  <em>Scientific Reports</em> 16, 25032 (2026).
+  Scoring logic ported from the companion repository,
+  <a href="https://github.com/cecy07/vestibular-classifier" target="_blank" rel="noopener">cecy07/vestibular-classifier</a> (MIT license).
+  This independent web implementation is offered for educational purposes and has not itself been clinically validated.
+</footer>
+
+</body>
+</html>
