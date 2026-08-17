@@ -169,6 +169,9 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </head>
 <body>
+<script>
+  document.documentElement.lang = 'en';
+</script>
 
 <!-- SVG icon sprite: simple original line-icons (not reproductions of the source paper's artwork) -->
 <svg class="visually-hidden" aria-hidden="true">
@@ -231,8 +234,8 @@
 
 <div class="app-header">
   <div class="brand">
-    <div class="brand-name">Vestibular Symptom Screener</div>
-    <div class="brand-tag">Pilot demo</div>
+    <div class="brand-name" id="brandName">Vestibular Symptom Screener</div>
+    <div class="brand-tag" id="brandTag">Pilot demo</div>
   </div>
   <div class="beam-wrap" id="beamWrap" aria-hidden="true">
     <div class="beam-line"></div>
@@ -278,7 +281,7 @@ const QUESTIONS = [
     text:"Did you experience severe dizziness just once, or has it occurred more than twice?",
     options:["Only once","Repeated 2 or more times"] },
   { id:'Q02', cat:'context', icon:'i-clock', type:'yesno',
-    text:"Is your dizziness constant \u2014 present nearly every day \u2014 rather than happening in separate, distinct episodes? (reconstructed \u2014 no match in supplementary PDF)" },
+    text:"Is your dizziness constant \u2014 present nearly every day \u2014 rather than happening in separate, distinct episodes?" },
   { id:'Q03', cat:'context', icon:'i-spin', type:'choice3',
     text:"In the most severe cases of dizziness, which of the following does the feeling most closely resemble?",
     options:["Spinning in circles","Staggering and swaying","Blurry"] },
@@ -286,7 +289,7 @@ const QUESTIONS = [
     text:"How long does the severe dizziness usually last?",
     options:["Less than 60 seconds","10 minutes up to about 12 hours","More than 12 hours (up to several days)"] },
   { id:'Q05', cat:'context', icon:'i-trigger', type:'choice3',
-    text:"How does your dizziness usually begin? (reconstructed \u2014 no match in supplementary PDF)",
+    text:"How does your dizziness usually begin?",
     options:["Suddenly, out of nowhere, in a brief attack","When I move or turn my head","Gradually, especially when I stand up or change position"] },
 
   // ---- Vascular safety screen (evaluated immediately after Q13) --------
@@ -369,9 +372,9 @@ const QUESTIONS = [
     text:"How many times in your life have you had headaches like the ones described above?",
     options:["More than 5 times in my life","No more than 4 times in my lifetime"] },
   { id:'Q39', cat:'headache', icon:'i-trigger', type:'yesno',
-    text:"Are your dizzy spells sometimes triggered by specific foods, stress, poor sleep, or hormonal changes? (reconstructed \u2014 no match in supplementary PDF)" },
+    text:"Are your dizzy spells sometimes triggered by specific foods, stress, poor sleep, or hormonal changes?" },
   { id:'Q40', cat:'headache', icon:'i-trigger', type:'yesno',
-    text:"Do you have a personal or family history of motion sickness since childhood? (reconstructed \u2014 no match in supplementary PDF)" },
+    text:"Do you have a personal or family history of motion sickness since childhood?" },
 
   // ---- Peripheral vestibulopathy (VEST) specific -------------------------
   { id:'Q41', cat:'vest', icon:'i-vest', type:'yesno',
@@ -398,10 +401,251 @@ const QUESTIONS = [
     text:"When dizzy, does your vision become blurry?" },
 ];
 
-const CATEGORY_LABEL = {
-  context:'General', vascular:'Safety check', chronic:'Chronic pattern', ear:'Ear symptoms',
-  positional:'Positional trigger', headache:'Headache history', vest:'Balance history', orthostatic:'Standing / posture',
+
+/* =========================================================================
+   LANGUAGE SUPPORT
+   -------------------------------------------------------------------------
+   English and Hindi share the same question IDs, option order, and scoring
+   codes. Only presentation text is translated.
+========================================================================= */
+const I18N = {
+  en: {
+    languageTitle: "Choose your language",
+    languageIntro: "Please select the language you would like to use for the vestibular symptom screener.",
+    english: "English",
+    hindi: "हिन्दी",
+    beforeBegin: "Before you begin",
+    introTitle: "A quick screen for common dizziness & balance disorders",
+    introLede: "This takes about 7–10 minutes. Answer based on your usual pattern of symptoms — there are no wrong answers.",
+    fullName: "Full name",
+    namePlaceholder: "e.g. Jane Doe",
+    gender: "Gender",
+    select: "Select…",
+    female: "Female",
+    male: "Male",
+    other: "Other",
+    preferNot: "Prefer not to say",
+    age: "Age",
+    agePlaceholder: "e.g. 62",
+    phone: "Phone number",
+    phonePlaceholder: "e.g. +91 98765 43210",
+    introError: "Please enter your name, age, and phone number to continue.",
+    start: "Start the screener",
+    disclaimer1Strong: "This tool does not diagnose you.",
+    disclaimer1: "It's a self-report screening aid, based on the published rule-based algorithm from Ryu et al., Scientific Reports (2026), that suggests which conditions are worth discussing with a clinician. It cannot replace an in-person examination, and if any answer suggests a possible stroke-related cause, seek emergency care immediately rather than relying on this tool.",
+    disclaimer2Strong: "Your name, age, gender, and phone number will be saved",
+    disclaimer2: " along with your answers and results so this screening can be reviewed later. Only proceed if you're comfortable with that.",
+    back: "Back",
+    question: "Question",
+    of: "of",
+    safety: "Safety check",
+    yes: "Yes",
+    no: "No",
+    safetyTitle: "Please seek medical care promptly",
+    safetyText: "Your answers to the safety questions include patterns that can, in rare cases, indicate a stroke-related cause of dizziness — which needs urgent evaluation. This is most often not the case, but it can't be ruled out by a questionnaire alone.",
+    safetyStrong: "If you have new weakness, numbness, slurred speech, double vision, or the worst headache of your life right now, call your local emergency number or go to an emergency room immediately.",
+    exit: "Exit — I'll seek care now",
+    continue: "Continue the screener anyway (for information only)",
+    takeCare: "Take care",
+    emergency: "Please contact emergency services or go to your nearest emergency room now. You can return to this screener later if you'd like.",
+    resultsEyebrow: "Your results",
+    resultsTitle: "Two conditions worth discussing with a clinician",
+    mostLikely: "Most likely",
+    alsoDiscuss: "Also worth discussing",
+    matches: "Matches",
+    criteria: "criteria in this screen",
+    allScores: "View all six scores",
+    reminder: "Reminder",
+    reminderText: "your answers earlier flagged possible stroke-related warning signs. Please still seek prompt in-person medical evaluation regardless of the results below.",
+    noPattern: "No clear pattern emerged from your answers — please discuss your symptoms with a clinician directly.",
+    computerResultStrong: "This result is computer-generated from a symptom questionnaire and may not be accurate.",
+    notDiagnosis: "It is not a diagnosis. Please see a doctor — or an emergency room if symptoms are severe or sudden — for an accurate evaluation. In the pilot study this algorithm was based on (n=86 patients), its top-two output matched an expert otologist's diagnosis 82.1% of the time; individual disorders varied in accuracy, and the study's own authors note it still needs external, multi-center validation before clinical use.",
+    pdfAuto: "A PDF with all your answers and these results has been downloaded automatically. If your browser blocked it, use the button below.",
+    downloadPdf: "Download results PDF",
+    uploadPrefix: "To store it in GitHub: open your repo → Add file → Upload files → drag in the downloaded PDF → in the filename box before committing, type the full path",
+    startOver: "Start over",
+    notAnswered: "not answered",
+    generated: "Generated",
+    subjectInfo: "Subject information",
+    results: "Results",
+    allSix: "All six condition scores",
+    allResponses: "All responses",
+    matchesOf: "matches",
+    algorithmNote: "This result is computer-generated from a symptom questionnaire and may not be accurate. It is not a diagnosis. Based on the pilot algorithm of Ryu et al., Scientific Reports (2026, n=86), which the study authors note still needs external, multi-center validation before clinical use.",
+    pdfTitle: "Vestibular Symptom Screener — Results"
+  },
+
+  hi: {
+    languageTitle: "भाषा चुनें",
+    languageIntro: "वेस्टिब्युलर लक्षण स्क्रीनिंग के लिए अपनी पसंद की भाषा चुनें।",
+    english: "English",
+    hindi: "हिन्दी",
+    beforeBegin: "शुरू करने से पहले",
+    introTitle: "चक्कर और संतुलन से जुड़ी सामान्य समस्याओं के लिए एक त्वरित स्क्रीनिंग",
+    introLede: "इसे पूरा करने में लगभग 7–10 मिनट लगते हैं। अपने सामान्य लक्षणों के अनुसार उत्तर दें — इसमें कोई सही या गलत उत्तर नहीं है।",
+    fullName: "पूरा नाम",
+    namePlaceholder: "जैसे: सीमा शर्मा",
+    gender: "लिंग",
+    select: "चुनें…",
+    female: "महिला",
+    male: "पुरुष",
+    other: "अन्य",
+    preferNot: "बताना नहीं चाहते",
+    age: "आयु",
+    agePlaceholder: "जैसे: 62",
+    phone: "फ़ोन नंबर",
+    phonePlaceholder: "जैसे: +91 98765 43210",
+    introError: "आगे बढ़ने के लिए अपना नाम, आयु और फ़ोन नंबर दर्ज करें।",
+    start: "स्क्रीनिंग शुरू करें",
+    disclaimer1Strong: "यह उपकरण किसी बीमारी का निदान नहीं करता।",
+    disclaimer1: "यह एक स्व-रिपोर्ट स्क्रीनिंग सहायता है, जो Ryu आदि द्वारा Scientific Reports (2026) में प्रकाशित नियम-आधारित एल्गोरिद्म पर आधारित है। यह उन स्थितियों की पहचान में सहायता करता है जिनके बारे में चिकित्सक से चर्चा करना उचित हो सकता है। यह व्यक्तिगत चिकित्सकीय जाँच का विकल्प नहीं है। यदि किसी उत्तर से स्ट्रोक से संबंधित संभावित कारण का संकेत मिलता है, तो इस उपकरण पर निर्भर रहने के बजाय तुरंत आपातकालीन चिकित्सा सहायता लें।",
+    disclaimer2Strong: "आपका नाम, आयु, लिंग और फ़ोन नंबर सुरक्षित किए जाएंगे",
+    disclaimer2: " तथा आपके उत्तरों और परिणामों के साथ रखे जाएंगे ताकि इस स्क्रीनिंग की बाद में समीक्षा की जा सके। तभी आगे बढ़ें जब आप इससे सहज हों।",
+    back: "वापस",
+    question: "प्रश्न",
+    of: "में से",
+    safety: "सुरक्षा जाँच",
+    yes: "हाँ",
+    no: "नहीं",
+    safetyTitle: "कृपया तुरंत चिकित्सकीय सहायता लें",
+    safetyText: "सुरक्षा संबंधी प्रश्नों के आपके उत्तरों में ऐसे संकेत पाए गए हैं जो दुर्लभ मामलों में चक्कर के स्ट्रोक-संबंधी कारण की ओर संकेत कर सकते हैं। ऐसी स्थिति में तत्काल चिकित्सकीय मूल्यांकन आवश्यक है। अधिकांश मामलों में ऐसा कारण नहीं होता, लेकिन केवल प्रश्नावली के आधार पर इसे पूरी तरह खारिज नहीं किया जा सकता।",
+    safetyStrong: "यदि अभी आपको अचानक कमजोरी, सुन्नपन, बोलने में अस्पष्टता, दोहरा दिखाई देना या जीवन का सबसे तेज़/भयंकर सिरदर्द हो रहा है, तो तुरंत स्थानीय आपातकालीन सेवा से संपर्क करें या निकटतम आपातकालीन विभाग जाएँ।",
+    exit: "बाहर निकलें — अभी चिकित्सकीय सहायता लूँगा/लूँगी",
+    continue: "फिर भी स्क्रीनिंग जारी रखें (केवल जानकारी के लिए)",
+    takeCare: "अपना ध्यान रखें",
+    emergency: "कृपया अभी आपातकालीन सेवाओं से संपर्क करें या निकटतम आपातकालीन विभाग जाएँ। यदि चाहें तो बाद में इस स्क्रीनिंग पर वापस आ सकते हैं।",
+    resultsEyebrow: "आपके परिणाम",
+    resultsTitle: "दो ऐसी स्थितियाँ जिन पर चिकित्सक से चर्चा की जा सकती है",
+    mostLikely: "सबसे अधिक संभावित",
+    alsoDiscuss: "इस पर भी चर्चा की जा सकती है",
+    matches: "मेल खाता है",
+    criteria: "मानदंडों से",
+    allScores: "सभी छह स्कोर देखें",
+    reminder: "याद रखें",
+    reminderText: "आपके पहले के उत्तरों में स्ट्रोक से संबंधित संभावित चेतावनी संकेत पाए गए हैं। नीचे दिए गए परिणाम चाहे जो हों, कृपया शीघ्र व्यक्तिगत चिकित्सकीय मूल्यांकन अवश्य कराएँ।",
+    noPattern: "आपके उत्तरों से कोई स्पष्ट पैटर्न सामने नहीं आया — कृपया अपने लक्षणों पर सीधे चिकित्सक से चर्चा करें।",
+    computerResultStrong: "यह परिणाम लक्षणों की प्रश्नावली से कंप्यूटर द्वारा तैयार किया गया है और पूरी तरह सटीक नहीं हो सकता।",
+    notDiagnosis: "यह निदान नहीं है। सटीक मूल्यांकन के लिए चिकित्सक से मिलें — और यदि लक्षण गंभीर या अचानक हों तो आपातकालीन विभाग जाएँ। जिस पायलट अध्ययन (n=86) पर यह एल्गोरिद्म आधारित है, उसमें इसके शीर्ष दो परिणाम विशेषज्ञ ओटोलॉजिस्ट के निदान से 82.1% मामलों में मेल खाते थे; अलग-अलग विकारों में सटीकता अलग थी। अध्ययन के लेखकों ने यह भी बताया है कि नैदानिक उपयोग से पहले बाहरी, बहु-केंद्र सत्यापन आवश्यक है।",
+    pdfAuto: "आपके सभी उत्तरों और परिणामों वाली PDF स्वतः डाउनलोड की गई है। यदि आपके ब्राउज़र ने डाउनलोड रोक दिया हो, तो नीचे दिए गए बटन का उपयोग करें।",
+    downloadPdf: "परिणाम PDF डाउनलोड करें",
+    uploadPrefix: "इसे GitHub में सुरक्षित करने के लिए: अपनी रिपॉज़िटरी खोलें → Add file → Upload files → डाउनलोड की गई PDF को डालें → Commit करने से पहले filename बॉक्स में पूरा path दर्ज करें",
+    startOver: "फिर से शुरू करें",
+    notAnswered: "उत्तर नहीं दिया गया",
+    generated: "तैयार किया गया",
+    subjectInfo: "व्यक्ति की जानकारी",
+    results: "परिणाम",
+    allSix: "सभी छह स्थितियों के स्कोर",
+    allResponses: "सभी उत्तर",
+    matchesOf: "मेल",
+    algorithmNote: "यह परिणाम लक्षणों की प्रश्नावली से कंप्यूटर द्वारा तैयार किया गया है और पूरी तरह सटीक नहीं हो सकता। यह निदान नहीं है। यह Ryu आदि के Scientific Reports (2026, n=86) के पायलट एल्गोरिद्म पर आधारित है। अध्ययन के लेखकों के अनुसार नैदानिक उपयोग से पहले बाहरी, बहु-केंद्र सत्यापन अभी आवश्यक है।",
+    pdfTitle: "वेस्टिब्युलर लक्षण स्क्रीनर — परिणाम"
+  }
 };
+
+const QUESTION_TEXT_HI = {
+  Q01: "क्या आपको तेज़ चक्कर केवल एक बार हुआ है, या यह दो से अधिक बार हो चुका है?",
+  Q02: "क्या आपका चक्कर लगातार रहता है — लगभग हर दिन मौजूद रहता है — बजाय इसके कि अलग-अलग, स्पष्ट एपिसोड में हो?",
+  Q03: "चक्कर के सबसे गंभीर समय में, नीचे दिए गए विकल्पों में से कौन-सा अनुभव आपकी स्थिति से सबसे अधिक मिलता-जुलता है?",
+  Q04: "तेज़ चक्कर आमतौर पर कितनी देर तक रहता है?",
+  Q05: "आपका चक्कर आमतौर पर कैसे शुरू होता है?",
+  Q06: "चक्कर आने पर क्या आपको एक हाथ या पैर में दूसरे की तुलना में विशेष रूप से अधिक कमजोरी महसूस होती है?",
+  Q07: "चक्कर आने पर क्या आपको एक हाथ या पैर में दूसरे की तुलना में विशेष रूप से कम संवेदना महसूस होती है?",
+  Q08: "क्या आपको स्पष्ट रूप से बोलने में कठिनाई होती है?",
+  Q09: "क्या पहले की तुलना में खाना निगलना अधिक असुविधाजनक हो गया है?",
+  Q10: "चक्कर आने पर क्या अपना संतुलन बनाए रखना इतना कठिन होता है कि कुर्सी से गिरने जैसी स्थिति हो जाए?",
+  Q11: "क्या कभी आपका उच्च रक्तचाप होने का निदान हुआ है?",
+  Q12: "क्या कभी आपका मधुमेह होने का निदान हुआ है?",
+  Q13: "क्या चक्कर आने पर आपको कभी दोहरा दिखाई देता है?",
+  Q14: "क्या लगातार रहने वाला चक्कर रोज़मर्रा के कामों (जैसे खरीदारी, काम आदि) को कठिन बना देता है?",
+  Q15: "क्या जटिल पैटर्न या तेज़ी से चलती वस्तुओं को देखने पर चक्कर बढ़ जाता है?",
+  Q16: "क्या सीधे खड़े होने, चलने या हिलने-डुलने पर चक्कर बढ़ जाता है?",
+  Q17: "लगातार चक्कर शुरू होने से पहले क्या कोई बीमारी या ऐसी विशेष घटना हुई थी जिससे यह शुरू हुआ हो सकता है?",
+  Q18: "क्या आपको तीन महीने से अधिक समय से हर दिन लगातार चक्कर महसूस हो रहा है?",
+  Q19: "क्या वाहन या परिवहन के अन्य साधनों में यात्रा करने पर चक्कर बढ़ जाता है?",
+  Q20: "बहुत तेज़ चक्कर आने पर क्या आपको एक कान से कम सुनाई देता है?",
+  Q21: "बहुत तेज़ चक्कर आने पर क्या आपको एक कान में अधिक तेज़ 'बीप' या 'भिनभिनाहट' सुनाई देती है?",
+  Q22: "बहुत तेज़ चक्कर आने पर क्या एक कान अधिक बंद या भरा हुआ महसूस होता है?",
+  Q23: "क्या लेटे हुए करवट बदलने पर चक्कर बढ़ जाता है?",
+  Q24: "क्या बैठी हुई स्थिति से लेटने पर चक्कर बढ़ जाता है?",
+  Q25: "क्या आपको सिरदर्द होता है?",
+  Q26: "चक्कर आने पर आपको सिरदर्द कितनी बार होता है?",
+  Q27: "चक्कर आने पर क्या तेज़ रोशनी से आपको परेशानी होती है?",
+  Q28: "चक्कर आने पर क्या तेज़ आवाज़ों से आपको परेशानी होती है?",
+  Q29: "चक्कर आने पर क्या आपको टिमटिमाते तारे दिखाई देते हैं?",
+  Q30: "आपका सिरदर्द आमतौर पर कितनी देर तक रहता है?",
+  Q31: "क्या आपका सिरदर्द मुख्य रूप से सिर के एक ही तरफ होता है?",
+  Q32: "क्या आपका सिरदर्द धड़कता हुआ महसूस होता है?",
+  Q33: "आपके सिरदर्द की तीव्रता कितनी होती है?",
+  Q34: "सिरदर्द होने पर क्या 2–3 मंज़िल सीढ़ियाँ चढ़ने से सिरदर्द बढ़ जाता है?",
+  Q35: "सिरदर्द होने पर क्या आपको उल्टी जैसा महसूस होता है या वास्तव में उल्टी हुई है?",
+  Q36: "सिरदर्द होने पर क्या तेज़ रोशनी से आपको परेशानी होती है?",
+  Q37: "सिरदर्द होने पर क्या तेज़ आवाज़ों से आपको परेशानी होती है?",
+  Q38: "आपको जीवन में ऊपर बताए गए प्रकार का सिरदर्द कितनी बार हुआ है?",
+  Q39: "क्या आपके चक्कर के दौरे कभी कुछ विशेष खाद्य पदार्थों, तनाव, कम नींद या हार्मोनल बदलावों से शुरू होते हैं?",
+  Q40: "क्या बचपन से आपको या आपके परिवार में किसी को यात्रा के दौरान होने वाली मोशन सिकनेस का इतिहास रहा है?",
+  Q41: "क्या सीधे खड़े होने, चलने या हिलने-डुलने पर संतुलन बनाए रखना कठिन होता है?",
+  Q42: "चलते समय संकेतों/लिखे हुए शब्दों को देखने पर क्या अक्षर हिलते हुए दिखाई देते हैं?",
+  Q43: "क्या अँधेरे स्थानों या असमतल ज़मीन पर संतुलन बनाए रखना अधिक कठिन होता है?",
+  Q44: "क्या आपको स्थिर बैठे रहने या लेटे रहने पर भी चक्कर महसूस होता है?",
+  Q45: "क्या लंबे समय तक बैठे रहने के बाद अचानक खड़े होने पर आपको चक्कर आता है?",
+  Q46: "क्या दोबारा बैठने या लेटने पर चक्कर कम हो जाता है?",
+  Q47: "चक्कर आने पर क्या आपके दिल की धड़कन तेज़ हो जाती है?",
+  Q48: "चक्कर आने पर क्या आपको पूरे शरीर में कमजोरी महसूस होती है?",
+  Q49: "चक्कर आने पर क्या जटिल बातों पर ध्यान केंद्रित करना कठिन होता है?",
+  Q50: "चक्कर आने पर क्या आपकी दृष्टि धुंधली हो जाती है?"
+};
+
+const OPTIONS_HI = {
+  Q01:["केवल एक बार","2 या अधिक बार"],
+  Q03:["चारों ओर घूमने जैसा","लड़खड़ाने और डगमगाने जैसा","धुंधला दिखाई देना"],
+  Q04:["60 सेकंड से कम","10 मिनट से लगभग 12 घंटे तक","12 घंटे से अधिक (कई दिनों तक)"],
+  Q05:["अचानक, बिना किसी स्पष्ट कारण के, थोड़े समय का दौरा","सिर हिलाने या घुमाने पर","धीरे-धीरे, विशेषकर खड़े होने या स्थिति बदलने पर"],
+  Q26:["लगभग हमेशा","लगभग आधे समय","कभी-कभी"],
+  Q30:["4 घंटे या उससे कम","4 घंटे से 3 दिन तक","3 दिन या उससे अधिक"],
+  Q33:["दैनिक गतिविधियाँ करना संभव नहीं रहता","कभी-कभी दर्द की दवा लेनी पड़ती है या झपकी लेनी पड़ती है","दैनिक गतिविधियों में कोई समस्या नहीं"],
+  Q38:["जीवन में 5 से अधिक बार","जीवन में 4 बार से अधिक नहीं"]
+};
+
+const CATEGORY_LABEL_EN = {
+  context:'General', vascular:'Safety check', chronic:'Chronic pattern', ear:'Ear symptoms',
+  positional:'Positional trigger', headache:'Headache history', vest:'Balance history', orthostatic:'Standing / posture'
+};
+const CATEGORY_LABEL_HI = {
+  context:'सामान्य', vascular:'सुरक्षा जाँच', chronic:'लगातार रहने वाला पैटर्न', ear:'कान से जुड़े लक्षण',
+  positional:'स्थिति से संबंधित कारण', headache:'सिरदर्द का इतिहास', vest:'संतुलन का इतिहास', orthostatic:'खड़े होने / मुद्रा से संबंधित'
+};
+
+const DX_LABEL_HI = {
+  BPPV:"सौम्य पैरॉक्सिज़्मल पोज़िशनल वर्टिगो (BPPV)",
+  MD:"मेनिएर रोग",
+  VM:"वेस्टिब्युलर माइग्रेन",
+  PPPD:"पर्सिस्टेंट पोस्टुरल-पर्सेप्चुअल डिज़िनेस (PPPD)",
+  VEST:"वेस्टिबुलोपैथी (आंतरिक कान का संतुलन संबंधी विकार)",
+  OH:"ऑर्थोस्टैटिक चक्कर"
+};
+const DX_DESC_HI = {
+  BPPV:"सिर की कुछ विशेष गतिविधियों — जैसे बिस्तर में करवट बदलना, सिर पीछे झुकाना या नीचे झुकना — से होने वाला थोड़े समय का तेज़ घूमने जैसा चक्कर। यह अक्सर आंतरिक कान में मौजूद छोटे कैल्शियम कणों की स्थिति बदलने से होता है और उपचार योग्य हो सकता है।",
+  MD:"20 मिनट से कई घंटों तक रहने वाले चक्कर के एपिसोड, जिनके साथ सुनने की क्षमता में उतार-चढ़ाव, कान में घंटी/भिनभिनाहट और एक कान में भरेपन की भावना हो सकती है। यह आंतरिक कान में द्रव के दबाव में बदलाव से संबंधित हो सकता है।",
+  VM:"माइग्रेन के सिरदर्द के साथ या उसके बिना होने वाला चक्कर या वर्टिगो — अक्सर रोशनी या आवाज़ के प्रति संवेदनशीलता और कभी-कभी दृश्य आभा के साथ। यह बार-बार होने वाले चक्कर के सामान्य कारणों में से एक है।",
+  PPPD:"3 या अधिक महीनों तक रहने वाली अस्थिरता या डगमगाने की भावना, जो व्यस्त दृश्य वातावरण, गति या सीधे खड़े रहने पर बढ़ती है। यह अक्सर किसी शुरुआती वेस्टिब्युलर घटना के बाद विकसित होती है।",
+  VEST:"एक या दोनों आंतरिक कानों के संतुलन अंग की कार्यक्षमता में कमी। यह वायरल बीमारी या कुछ दवाओं के बाद हो सकती है और अँधेरे में या आँखें बंद करने पर अस्थिरता अधिक हो सकती है।",
+  OH:"खड़े होने पर रक्तचाप में कमी के कारण हल्का चक्कर या बेहोशी जैसा महसूस होना, जो बैठने या लेटने पर जल्दी कम हो जाता है। यह दवाओं, शरीर में पानी की कमी या किसी अन्य अंतर्निहित स्थिति से संबंधित हो सकता है।"
+};
+
+function t(key){ return I18N[state.language][key] || I18N.en[key] || key; }
+function currentCategoryLabel(cat){ return state.language==='hi' ? CATEGORY_LABEL_HI[cat] : CATEGORY_LABEL_EN[cat]; }
+function currentDxLabel(dx){ return state.language==='hi' ? DX_LABEL_HI[dx] : DX_LABEL[dx]; }
+function currentDxDesc(dx){ return state.language==='hi' ? DX_DESC_HI[dx] : DX_DESC[dx]; }
+
+function localizedQuestion(q){
+  if(state.language==='en') return { ...q, options:q.options };
+  let options = q.options;
+  if(q.type==='yesno') options = [t('yes'), t('no')];
+  else if(OPTIONS_HI[q.id]) options = OPTIONS_HI[q.id];
+  return { ...q, text:QUESTION_TEXT_HI[q.id] || q.text, options };
+}
+
+const CATEGORY_LABEL = CATEGORY_LABEL_EN;
 
 /* =========================================================================
    RULES ENGINE
@@ -556,7 +800,7 @@ function classify(a){
 /* =========================================================================
    APP CONTROLLER
 ========================================================================= */
-const state = { screen:'intro', qIndex:0, answers:{}, age:null, name:'', gender:'', phone:'', vascularSeen:false, vascularFlagged:false, pdfDownloaded:false };
+const state = { screen:'language', language:'en', qIndex:0, answers:{}, age:null, name:'', gender:'', phone:'', vascularSeen:false, vascularFlagged:false, pdfDownloaded:false };
 
 // ---- Local results file (download-and-upload workflow, no backend) -------
 function slugifyName(name){
@@ -577,14 +821,19 @@ function iconSvg(id, size=34){
 function updateBeam(){
   const wrap=document.getElementById('beamWrap'), fill=document.getElementById('beamFill'),
         dot=document.getElementById('beamDot'), label=document.getElementById('beamLabel');
-  let frac=0, text='Not started';
+  const brandName=document.getElementById('brandName'), brandTag=document.getElementById('brandTag');
+  if(brandName) brandName.textContent = state.language==='hi' ? 'वेस्टिब्युलर लक्षण स्क्रीनर' : 'Vestibular Symptom Screener';
+  if(brandTag) brandTag.textContent = state.language==='hi' ? 'पायलट डेमो' : 'Pilot demo';
+  let frac=0, text=state.language==='hi' ? 'शुरू नहीं हुआ' : 'Not started';
   if(state.screen==='question'){
     frac = state.qIndex/QUESTIONS.length;
-    text = `Question ${state.qIndex+1} of ${QUESTIONS.length}`;
+    text = state.language==='hi'
+      ? `${t('question')} ${state.qIndex+1} ${t('of')} ${QUESTIONS.length}`
+      : `${t('question')} ${state.qIndex+1} ${t('of')} ${QUESTIONS.length}`;
   } else if(state.screen==='results'){
-    frac = 1; text = 'Complete';
+    frac = 1; text = state.language==='hi' ? 'पूर्ण' : 'Complete';
   } else if(state.screen==='vascular-alert'){
-    frac = (VASC_LAST_INDEX+1)/QUESTIONS.length; text='Safety check';
+    frac = (VASC_LAST_INDEX+1)/QUESTIONS.length; text=t('safety');
   }
   fill.style.width = (frac*100)+'%';
   dot.style.left = (frac*100)+'%';
@@ -595,57 +844,82 @@ function updateBeam(){
 }
 
 function render(){
+  document.documentElement.lang = state.language==='hi' ? 'hi' : 'en';
+  document.title = state.language==='hi' ? 'वेस्टिब्युलर लक्षण स्क्रीनर' : 'Vestibular Symptom Screener';
+  const footerEn=document.getElementById('footerEn'), footerHi=document.getElementById('footerHi');
+  if(footerEn) footerEn.style.display = state.language==='hi' ? 'none' : 'inline';
+  if(footerHi) footerHi.style.display = state.language==='hi' ? 'inline' : 'none';
   updateBeam();
   const app = document.getElementById('app');
+  if(state.screen==='language') return renderLanguage(app);
   if(state.screen==='intro') return renderIntro(app);
   if(state.screen==='question') return renderQuestion(app);
   if(state.screen==='vascular-alert') return renderVascularAlert(app);
   if(state.screen==='results') return renderResults(app);
 }
 
+
+function renderLanguage(app){
+  app.innerHTML = `
+    <div class="card">
+      <p class="eyebrow">Language / भाषा</p>
+      <h1>${t('languageTitle')}</h1>
+      <p class="lede">${t('languageIntro')}</p>
+      <button class="btn opt-btn" id="englishBtn">
+        <span class="opt-letter">A</span>${I18N.en.english}
+      </button>
+      <button class="btn opt-btn" id="hindiBtn">
+        <span class="opt-letter">B</span>${I18N.hi.hindi}
+      </button>
+    </div>
+  `;
+  document.getElementById('englishBtn').addEventListener('click', ()=>{
+    state.language='en'; state.screen='intro'; render();
+  });
+  document.getElementById('hindiBtn').addEventListener('click', ()=>{
+    state.language='hi'; state.screen='intro'; render();
+  });
+}
+
 function renderIntro(app){
   app.innerHTML = `
     <div class="card">
-      <p class="eyebrow">Before you begin</p>
-      <h1>A quick screen for common dizziness &amp; balance disorders</h1>
-      <p class="lede">This takes about 7\u201310 minutes. Answer based on your usual pattern of symptoms \u2014 there are no wrong answers.</p>
+      <p class="eyebrow">${t('beforeBegin')}</p>
+      <h1>${t('introTitle')}</h1>
+      <p class="lede">${t('introLede')}</p>
 
       <div class="field">
-        <label for="nameInput">Full name</label>
-        <input type="text" id="nameInput" autocomplete="name" placeholder="e.g. Jane Doe">
+        <label for="nameInput">${t('fullName')}</label>
+        <input type="text" id="nameInput" autocomplete="name" placeholder="${t('namePlaceholder')}">
       </div>
       <div class="field">
-        <label for="genderInput">Gender</label>
+        <label for="genderInput">${t('gender')}</label>
         <select id="genderInput">
-          <option value="">Select\u2026</option>
-          <option value="Female">Female</option>
-          <option value="Male">Male</option>
-          <option value="Other">Other</option>
-          <option value="Prefer not to say">Prefer not to say</option>
+          <option value="">${t('select')}</option>
+          <option value="Female">${t('female')}</option>
+          <option value="Male">${t('male')}</option>
+          <option value="Other">${t('other')}</option>
+          <option value="Prefer not to say">${t('preferNot')}</option>
         </select>
       </div>
       <div class="field">
-        <label for="ageInput">Age</label>
-        <input type="number" id="ageInput" min="1" max="120" inputmode="numeric" placeholder="e.g. 62">
+        <label for="ageInput">${t('age')}</label>
+        <input type="number" id="ageInput" min="1" max="120" inputmode="numeric" placeholder="${t('agePlaceholder')}">
       </div>
       <div class="field">
-        <label for="phoneInput">Phone number</label>
-        <input type="tel" id="phoneInput" autocomplete="tel" placeholder="e.g. +91 98765 43210">
+        <label for="phoneInput">${t('phone')}</label>
+        <input type="tel" id="phoneInput" autocomplete="tel" placeholder="${t('phonePlaceholder')}">
       </div>
       <p id="introError" style="color:var(--danger-ink,#b42318); font-size:14px; display:none; margin:4px 0 10px;">
-        Please enter your name, age, and phone number to continue.
+        ${t('introError')}
       </p>
 
-      <button class="btn btn-primary" id="startBtn">Start the screener</button>
+      <button class="btn btn-primary" id="startBtn">${t('start')}</button>
       <div class="disclaimer">
-        <strong>This tool does not diagnose you.</strong> It's a self-report screening aid, based on the published
-        rule-based algorithm from Ryu et&nbsp;al., <em>Scientific Reports</em> (2026), that suggests which conditions
-        are worth discussing with a clinician. It cannot replace an in-person examination, and if any answer suggests
-        a possible stroke-related cause, seek emergency care immediately rather than relying on this tool.
+        <strong>${t('disclaimer1Strong')}</strong> ${t('disclaimer1')}
       </div>
       <div class="disclaimer" style="margin-top:10px;">
-        <strong>Your name, age, gender, and phone number will be saved</strong> along with your answers and results
-        so this screening can be reviewed later. Only proceed if you're comfortable with that.
+        <strong>${t('disclaimer2Strong')}</strong>${t('disclaimer2')}
       </div>
     </div>
   `;
@@ -667,13 +941,14 @@ function renderIntro(app){
 }
 
 function renderQuestion(app){
-  const q = QUESTIONS[state.qIndex];
-  const options = q.type==='yesno' ? ['Yes','No'] : q.options;
+  const rawQ = QUESTIONS[state.qIndex];
+  const q = localizedQuestion(rawQ);
+  const options = q.type==='yesno' ? [t('yes'), t('no')] : q.options;
   const letters = ['A','B','C'];
   app.innerHTML = `
-    <button class="back-link" id="backBtn" ${state.qIndex===0?'style="visibility:hidden"':''}>&larr; Back</button>
+    <button class="back-link" id="backBtn" ${state.qIndex===0?'style="visibility:hidden"':''}>&larr; ${t('back')}</button>
     <div class="card">
-      <p class="eyebrow">${CATEGORY_LABEL[q.cat]} \u00b7 ${q.id}</p>
+      <p class="eyebrow">${currentCategoryLabel(q.cat)} · ${q.id}</p>
       <div class="icon-badge">${iconSvg(q.icon)}</div>
       <h2 class="q-text">${q.text}</h2>
       <div id="optWrap">
@@ -721,22 +996,19 @@ function renderVascularAlert(app){
   app.innerHTML = `
     <div class="alert-card">
       ${iconSvg('i-alert', 56).replace('<svg ', '<svg class="alert-icon" ')}
-      <h1>Please seek medical care promptly</h1>
-      <p>Your answers to the safety questions include patterns that can, in rare cases, indicate a
-      stroke-related cause of dizziness \u2014 which needs urgent evaluation. This is most often not the case,
-      but it can't be ruled out by a questionnaire alone.</p>
-      <p><strong>If you have new weakness, numbness, slurred speech, double vision, or the worst headache of your
-      life right now, call your local emergency number or go to an emergency room immediately.</strong></p>
+      <h1>${t('safetyTitle')}</h1>
+      <p>${t('safetyText')}</p>
+      <p><strong>${t('safetyStrong')}</strong></p>
       <div class="btn-row" style="margin-top:22px;">
-        <button class="btn btn-danger-outline" id="exitBtn">Exit \u2014 I'll seek care now</button>
+        <button class="btn btn-danger-outline" id="exitBtn">${t('exit')}</button>
       </div>
-      <button class="btn btn-ghost" id="continueBtn" style="margin-top:8px;">Continue the screener anyway (for information only)</button>
+      <button class="btn btn-ghost" id="continueBtn" style="margin-top:8px;">${t('continue')}</button>
     </div>
   `;
   document.getElementById('exitBtn').addEventListener('click', ()=>{
     document.getElementById('app').innerHTML = `
-      <div class="card"><h1>Take care</h1>
-      <p class="lede">Please contact emergency services or go to your nearest emergency room now. You can return to this screener later if you'd like.</p></div>`;
+      <div class="card"><h1>${t('takeCare')}</h1>
+      <p class="lede">${t('emergency')}</p></div>`;
   });
   document.getElementById('continueBtn').addEventListener('click', ()=>{
     if(state.qIndex < QUESTIONS.length-1){ state.qIndex += 1; state.screen='question'; render(); }
@@ -745,30 +1017,64 @@ function renderVascularAlert(app){
 }
 
 function answerText(q, val){
-  if(val==null) return '\u2014 (not answered)';
-  if(q.type==='yesno') return val===1 ? 'Yes' : 'No';
-  return (q.options && q.options[val-1]) || String(val);
+  if(val==null) return `— (${t('notAnswered')})`;
+  const lq = localizedQuestion(q);
+  if(q.type==='yesno') return val===1 ? t('yes') : t('no');
+  return (lq.options && lq.options[val-1]) || String(val);
 }
 
-function buildPDF(result){
+let hindiFontPromise = null;
+
+async function ensureHindiFont(doc){
+  if(state.language!=='hi') return;
+  if(!hindiFontPromise){
+    hindiFontPromise = fetch('https://cdn.jsdelivr.net/gh/google/fonts/ofl/notosansdevanagari/NotoSansDevanagari-Regular.ttf')
+      .then(r=>{ if(!r.ok) throw new Error('Hindi font could not be loaded'); return r.arrayBuffer(); })
+      .then(buf=>{
+        const bytes = new Uint8Array(buf);
+        let binary = '';
+        const chunk = 0x8000;
+        for(let i=0;i<bytes.length;i+=chunk){
+          binary += String.fromCharCode(...bytes.subarray(i, Math.min(i+chunk, bytes.length)));
+        }
+        const base64 = btoa(binary);
+        doc.addFileToVFS('NotoSansDevanagari-Regular.ttf', base64);
+        doc.addFont('NotoSansDevanagari-Regular.ttf', 'NotoSansDevanagari', 'normal');
+      });
+  } else {
+    // The cached promise is tied to the first document, so the font still
+    // needs to be added to a new jsPDF instance. Fetch again for simplicity.
+    hindiFontPromise = null;
+    return ensureHindiFont(doc);
+  }
+  return hindiFontPromise;
+}
+
+async function buildPDF(result){
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF({ unit:'pt', format:'a4' });
+  if(state.language==='hi'){
+    try { await ensureHindiFont(doc); } catch(e) {
+      console.warn('Hindi PDF font load failed; using browser text fallback.', e);
+    }
+  }
   const pageW = doc.internal.pageSize.getWidth();
   const pageH = doc.internal.pageSize.getHeight();
   const margin = 48;
   const maxW = pageW - margin*2;
   let y = margin;
+  const fontName = state.language==='hi' ? 'NotoSansDevanagari' : 'helvetica';
 
   function ensureRoom(lineHeight){
     if(y + lineHeight > pageH - margin){ doc.addPage(); y = margin; }
   }
   function writeLine(text, opts={}){
     const size = opts.size || 10;
-    const style = opts.style || 'normal';
+    const style = state.language==='hi' ? 'normal' : (opts.style || 'normal');
     const gap = opts.gap != null ? opts.gap : size + 4;
-    doc.setFont('helvetica', style);
+    doc.setFont(fontName, style);
     doc.setFontSize(size);
-    const lines = doc.splitTextToSize(text, maxW);
+    const lines = doc.splitTextToSize(String(text), maxW);
     lines.forEach(line=>{
       ensureRoom(gap);
       doc.text(line, margin, y);
@@ -777,45 +1083,46 @@ function buildPDF(result){
   }
   function spacer(h){ y += h; }
 
-  writeLine('Vestibular Symptom Screener \u2014 Results', { size:16, style:'bold', gap:22 });
-  writeLine(`Generated: ${new Date().toLocaleString()}`, { size:9, style:'italic', gap:16 });
+  writeLine(t('pdfTitle'), { size:16, style:'bold', gap:22 });
+  writeLine(`${t('generated')}: ${new Date().toLocaleString(state.language==='hi'?'hi-IN':'en-IN')}`, { size:9, style:'italic', gap:16 });
   spacer(6);
 
-  writeLine('Subject information', { size:12, style:'bold', gap:16 });
-  writeLine(`Name: ${state.name || '\u2014'}`);
-  writeLine(`Gender: ${state.gender || '\u2014'}`);
-  writeLine(`Age: ${state.age != null ? state.age : '\u2014'}`);
-  writeLine(`Phone: ${state.phone || '\u2014'}`);
+  writeLine(t('subjectInfo'), { size:12, style:'bold', gap:16 });
+  writeLine(`${t('fullName')}: ${state.name || '—'}`);
+  writeLine(`${t('gender')}: ${state.language==='hi' ? ({Female:t('female'),Male:t('male'),Other:t('other'),'Prefer not to say':t('preferNot')}[state.gender] || '—') : (state.gender || '—')}`);
+  writeLine(`${t('age')}: ${state.age != null ? state.age : '—'}`);
+  writeLine(`${t('phone')}: ${state.phone || '—'}`);
   spacer(10);
 
-  writeLine('Results', { size:12, style:'bold', gap:16 });
+  writeLine(t('results'), { size:12, style:'bold', gap:16 });
   if(state.vascularFlagged){
-    writeLine('REMINDER: earlier answers flagged possible stroke-related warning signs. Prompt in-person medical evaluation is recommended regardless of the results below.', { size:9, style:'bold', gap:13 });
+    writeLine(`${t('reminder')}: ${t('reminderText')}`, { size:9, style:'bold', gap:13 });
     spacer(4);
   }
   const dx1 = result.dx1Final, dx2 = result.dx2Final;
   [dx1, dx2].filter(Boolean).forEach((dx,i)=>{
-    writeLine(`${i===0?'Most likely':'Also worth discussing'}: ${DX_LABEL[dx]} (matches ${result.scores[dx]}% of ${dx} criteria)`, { size:11, style:'bold', gap:14 });
-    writeLine(DX_DESC[dx], { size:9, gap:12 });
+    writeLine(`${i===0?t('mostLikely'):t('alsoDiscuss')}: ${currentDxLabel(dx)} (${t('matches')} ${result.scores[dx]}% ${t('criteria')})`, { size:11, style:'bold', gap:14 });
+    writeLine(currentDxDesc(dx), { size:9, gap:12 });
     spacer(4);
   });
-  writeLine('All six condition scores:', { size:10, style:'bold', gap:13 });
-  result.ranked.forEach(([c,s])=>{ writeLine(`  ${DX_LABEL[c]}: ${s}%`, { size:9, gap:12 }); });
+  writeLine(t('allSix'), { size:10, style:'bold', gap:13 });
+  result.ranked.forEach(([c,s])=>{ writeLine(`  ${currentDxLabel(c)}: ${s}%`, { size:9, gap:12 }); });
   spacer(8);
-  writeLine('This result is computer-generated from a symptom questionnaire and may not be accurate. It is not a diagnosis. Based on the pilot algorithm of Ryu et al., Scientific Reports (2026, n=86), which the study authors note still needs external, multi-center validation before clinical use.', { size:8, style:'italic', gap:11 });
+  writeLine(t('algorithmNote'), { size:8, style:'italic', gap:11 });
   spacer(14);
 
-  writeLine('All responses', { size:12, style:'bold', gap:16 });
+  writeLine(t('allResponses'), { size:12, style:'bold', gap:16 });
   QUESTIONS.forEach(q=>{
-    writeLine(`${q.id}. ${q.text}`, { size:9, style:'bold', gap:12 });
-    writeLine(`Answer: ${answerText(q, state.answers[q.id])}`, { size:9, gap:14 });
+    const lq = localizedQuestion(q);
+    writeLine(`${q.id}. ${lq.text}`, { size:9, style:'bold', gap:12 });
+    writeLine(`${state.language==='hi'?'उत्तर':'Answer'}: ${answerText(q, state.answers[q.id])}`, { size:9, gap:14 });
   });
 
   return doc;
 }
 
-function downloadPDF(result){
-  const doc = buildPDF(result);
+async function downloadPDF(result){
+  const doc = await buildPDF(result);
   const slug = slugifyName(state.name);
   const timestamp = new Date().toISOString().replace(/[:.]/g,'-');
   const filename = `${timestamp}.pdf`;
@@ -823,90 +1130,112 @@ function downloadPDF(result){
   return `results/${slug}/${filename}`;
 }
 
-function renderResults(app){
+async function renderResults(app){
   const result = classify(state.answers);
   const dx1 = result.dx1Final, dx2 = result.dx2Final;
   const vascNote = state.vascularFlagged ? `
     <div class="disclaimer" style="background:var(--danger-bg); color:var(--danger-ink); margin-bottom:20px;">
-      <strong>Reminder:</strong> your answers earlier flagged possible stroke-related warning signs.
-      Please still seek prompt in-person medical evaluation regardless of the results below.
+      <strong>${t('reminder')}:</strong> ${t('reminderText')}
     </div>` : '';
 
   const blocks = [dx1, dx2].filter(Boolean).map((dx,i)=>`
     <div class="result-block ${i===0?'primary':''}">
-      <div class="result-rank">${i===0?'Most likely':'Also worth discussing'}</div>
-      <div class="result-name">${DX_LABEL[dx]}</div>
-      <div class="result-score">Matches ${result.scores[dx]}% of ${dx} criteria in this screen</div>
-      <div class="result-desc">${DX_DESC[dx]}</div>
+      <div class="result-rank">${i===0?t('mostLikely'):t('alsoDiscuss')}</div>
+      <div class="result-name">${currentDxLabel(dx)}</div>
+      <div class="result-score">${t('matches')} ${result.scores[dx]}% ${t('criteria')}</div>
+      <div class="result-desc">${currentDxDesc(dx)}</div>
     </div>`).join('');
 
   const allScoresRows = result.ranked.map(([c,s])=>`
-    <tr><td>${DX_LABEL[c]}</td><td>${s}%</td></tr>`).join('');
+    <tr><td>${currentDxLabel(c)}</td><td>${s}%</td></tr>`).join('');
 
   const suggestedPath = `results/${slugifyName(state.name)}/<timestamp>.pdf`;
 
   app.innerHTML = `
     <div class="card">
-      <p class="eyebrow">Your results</p>
-      <h1>Two conditions worth discussing with a clinician</h1>
+      <p class="eyebrow">${t('resultsEyebrow')}</p>
+      <h1>${t('resultsTitle')}</h1>
       ${vascNote}
-      ${blocks || '<p>No clear pattern emerged from your answers \u2014 please discuss your symptoms with a clinician directly.</p>'}
+      ${blocks || `<p>${t('noPattern')}</p>`}
       <details>
-        <summary>View all six scores</summary>
+        <summary>${t('allScores')}</summary>
         <table class="score-table">${allScoresRows}</table>
       </details>
       <div class="disclaimer" style="margin-top:24px;">
-        <strong>This result is computer-generated from a symptom questionnaire and may not be accurate.</strong>
-        It is not a diagnosis. Please see a doctor \u2014 or an emergency room if symptoms are severe or sudden \u2014
-        for an accurate evaluation. In the pilot study this algorithm was based on (n=86 patients), its top-two
-        output matched an expert otologist's diagnosis 82.1% of the time; individual disorders varied in accuracy,
-        and the study's own authors note it still needs external, multi-center validation before clinical use.
+        <strong>${t('computerResultStrong')}</strong>
+        ${t('notDiagnosis')}
       </div>
 
       <p style="font-size:13px; color:var(--muted,#6b7280); margin-top:18px;">
-        A PDF with all your answers and these results has been downloaded automatically. If your browser blocked it,
-        use the button below.
+        ${t('pdfAuto')}
       </p>
-      <button class="btn btn-primary" id="downloadBtn">Download results PDF</button>
+      <button class="btn btn-primary" id="downloadBtn">${t('downloadPdf')}</button>
       <p id="uploadHint" style="font-size:13px; color:var(--muted,#6b7280); margin-top:8px; display:none;"></p>
 
-      <button class="btn btn-ghost" id="restartBtn" style="margin-top:10px;">Start over</button>
+      <button class="btn btn-ghost" id="restartBtn" style="margin-top:10px;">${t('startOver')}</button>
     </div>
   `;
-  function showUploadHint(path){
+
+  async function showUploadHint(path){
     const hint = document.getElementById('uploadHint');
     hint.style.display = 'block';
-    hint.innerHTML = `To store it in GitHub: open your repo \u2192 Add file \u2192 Upload files \u2192
-      drag in the downloaded PDF \u2192 in the filename box before committing, type the full path
-      <code>${path}</code> so it lands in that subject's folder.`;
+    hint.innerHTML = `${t('uploadPrefix')} <code>${path}</code> so it lands in that subject's folder.`;
   }
+
   if(!state.pdfDownloaded){
     state.pdfDownloaded = true;
-    const path = downloadPDF(result);
-    showUploadHint(path);
+    try {
+      const path = await downloadPDF(result);
+      showUploadHint(path);
+    } catch(e) {
+      state.pdfDownloaded = false;
+      console.error('PDF generation failed:', e);
+      document.getElementById('uploadHint').style.display='block';
+      document.getElementById('uploadHint').textContent =
+        state.language==='hi'
+          ? 'PDF स्वतः डाउनलोड नहीं हो सकी। नीचे दिए गए बटन से दोबारा प्रयास करें।'
+          : 'The PDF could not be downloaded automatically. Please use the button below to try again.';
+    }
   }
-  document.getElementById('downloadBtn').addEventListener('click', ()=>{
-    const path = downloadPDF(result);
-    showUploadHint(path);
+
+  document.getElementById('downloadBtn').addEventListener('click', async ()=>{
+    const btn = document.getElementById('downloadBtn');
+    btn.disabled = true;
+    try {
+      const path = await downloadPDF(result);
+      showUploadHint(path);
+    } finally {
+      btn.disabled = false;
+    }
   });
+
   document.getElementById('restartBtn').addEventListener('click', ()=>{
-    state.screen='intro'; state.qIndex=0; state.answers={}; state.vascularSeen=false; state.vascularFlagged=false;
+    state.screen='language'; state.language='en'; state.qIndex=0; state.answers={}; state.vascularSeen=false; state.vascularFlagged=false;
     state.pdfDownloaded=false;
     state.name=''; state.gender=''; state.age=null; state.phone=''; state.submitStatus='idle';
     render();
   });
 }
 
-render();
 </script>
 
 <footer>
-  Based on the rule-based algorithm published in Ryu, H.T., Callejas&nbsp;Pastor, C.A., Joo, J.S., Ku, Y. &amp; Suh, M.-W.
-  &ldquo;A rule-based mobile screening classifier for six ICVD-defined vestibular disorders: a pilot study,&rdquo;
-  <em>Scientific Reports</em> 16, 25032 (2026).
-  Scoring logic ported from the companion repository,
-  <a href="https://github.com/cecy07/vestibular-classifier" target="_blank" rel="noopener">cecy07/vestibular-classifier</a> (MIT license).
-  This independent web implementation is offered for educational purposes and has not itself been clinically validated.
+  <span id="footerEn">
+    Based on the rule-based algorithm published in Ryu, H.T., Callejas&nbsp;Pastor, C.A., Joo, J.S., Ku, Y. &amp; Suh, M.-W.
+    &ldquo;A rule-based mobile screening classifier for six ICVD-defined vestibular disorders: a pilot study,&rdquo;
+    <em>Scientific Reports</em> 16, 25032 (2026).
+    Scoring logic ported from the companion repository,
+    <a href="https://github.com/cecy07/vestibular-classifier" target="_blank" rel="noopener">cecy07/vestibular-classifier</a> (MIT license).
+    This independent web implementation is offered for educational purposes and has not itself been clinically validated.
+  </span>
+  <span id="footerHi" style="display:none;">
+    यह स्क्रीनिंग Ryu, H.T., Callejas&nbsp;Pastor, C.A., Joo, J.S., Ku, Y. एवं Suh, M.-W. द्वारा प्रकाशित नियम-आधारित एल्गोरिद्म पर आधारित है:
+    &ldquo;A rule-based mobile screening classifier for six ICVD-defined vestibular disorders: a pilot study,&rdquo;
+    <em>Scientific Reports</em> 16, 25032 (2026)।
+    स्कोरिंग लॉजिक संबंधित
+    <a href="https://github.com/cecy07/vestibular-classifier" target="_blank" rel="noopener">cecy07/vestibular-classifier</a> रिपॉज़िटरी (MIT लाइसेंस) से लिया गया है।
+    यह स्वतंत्र वेब कार्यान्वयन केवल शैक्षिक उद्देश्यों के लिए है और स्वयं क्लिनिकल रूप से मान्य नहीं किया गया है।
+  </span>
 </footer>
 
 </body>
