@@ -744,15 +744,6 @@ function renderVascularAlert(app){
   });
 }
 
-function slugifyName(name){
-  return (name||'subject')
-    .trim().toLowerCase()
-    .replace(/[^a-z0-9\s-]/g,'')
-    .replace(/\s+/g,'_')
-    .replace(/_+/g,'_')
-    .slice(0,80) || 'subject';
-}
-
 function answerText(q, val){
   if(val==null) return '\u2014 (not answered)';
   if(q.type==='yesno') return val===1 ? 'Yes' : 'No';
