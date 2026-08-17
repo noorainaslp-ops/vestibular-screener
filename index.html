@@ -166,6 +166,7 @@
 
   .visually-hidden{ position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); }
 </style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </head>
 <body>
 
@@ -277,7 +278,7 @@ const QUESTIONS = [
     text:"Did you experience severe dizziness just once, or has it occurred more than twice?",
     options:["Only once","Repeated 2 or more times"] },
   { id:'Q02', cat:'context', icon:'i-clock', type:'yesno',
-    text:"Is your dizziness constant \u2014 present nearly every day \u2014 rather than happening in separate, distinct episodes?" },
+    text:"Is your dizziness constant \u2014 present nearly every day \u2014 rather than happening in separate, distinct episodes? (reconstructed \u2014 no match in supplementary PDF)" },
   { id:'Q03', cat:'context', icon:'i-spin', type:'choice3',
     text:"In the most severe cases of dizziness, which of the following does the feeling most closely resemble?",
     options:["Spinning in circles","Staggering and swaying","Blurry"] },
@@ -285,7 +286,7 @@ const QUESTIONS = [
     text:"How long does the severe dizziness usually last?",
     options:["Less than 60 seconds","10 minutes up to about 12 hours","More than 12 hours (up to several days)"] },
   { id:'Q05', cat:'context', icon:'i-trigger', type:'choice3',
-    text:"How does your dizziness usually begin?",
+    text:"How does your dizziness usually begin? (reconstructed \u2014 no match in supplementary PDF)",
     options:["Suddenly, out of nowhere, in a brief attack","When I move or turn my head","Gradually, especially when I stand up or change position"] },
 
   // ---- Vascular safety screen (evaluated immediately after Q13) --------
@@ -368,9 +369,9 @@ const QUESTIONS = [
     text:"How many times in your life have you had headaches like the ones described above?",
     options:["More than 5 times in my life","No more than 4 times in my lifetime"] },
   { id:'Q39', cat:'headache', icon:'i-trigger', type:'yesno',
-    text:"Are your dizzy spells sometimes triggered by specific foods, stress, poor sleep, or hormonal changes?" },
+    text:"Are your dizzy spells sometimes triggered by specific foods, stress, poor sleep, or hormonal changes? (reconstructed \u2014 no match in supplementary PDF)" },
   { id:'Q40', cat:'headache', icon:'i-trigger', type:'yesno',
-    text:"Do you have a personal or family history of motion sickness since childhood?" },
+    text:"Do you have a personal or family history of motion sickness since childhood? (reconstructed \u2014 no match in supplementary PDF)" },
 
   // ---- Peripheral vestibulopathy (VEST) specific -------------------------
   { id:'Q41', cat:'vest', icon:'i-vest', type:'yesno',
@@ -555,7 +556,17 @@ function classify(a){
 /* =========================================================================
    APP CONTROLLER
 ========================================================================= */
-const state = { screen:'intro', qIndex:0, answers:{}, age:null, vascularSeen:false, vascularFlagged:false };
+const state = { screen:'intro', qIndex:0, answers:{}, age:null, name:'', gender:'', phone:'', vascularSeen:false, vascularFlagged:false, pdfDownloaded:false };
+
+// ---- Local results file (download-and-upload workflow, no backend) -------
+function slugifyName(name){
+  return (name||'subject')
+    .trim().toLowerCase()
+    .replace(/[^a-z0-9\s-]/g,'')
+    .replace(/\s+/g,'_')
+    .replace(/_+/g,'_')
+    .slice(0,80) || 'subject';
+}
 
 const VASC_LAST_INDEX = QUESTIONS.findIndex(q=>q.id==='Q13'); // interrupt check happens right after this
 
@@ -598,10 +609,33 @@ function renderIntro(app){
       <p class="eyebrow">Before you begin</p>
       <h1>A quick screen for common dizziness &amp; balance disorders</h1>
       <p class="lede">This takes about 7\u201310 minutes. Answer based on your usual pattern of symptoms \u2014 there are no wrong answers.</p>
+
       <div class="field">
-        <label for="ageInput">Your age</label>
+        <label for="nameInput">Full name</label>
+        <input type="text" id="nameInput" autocomplete="name" placeholder="e.g. Jane Doe">
+      </div>
+      <div class="field">
+        <label for="genderInput">Gender</label>
+        <select id="genderInput">
+          <option value="">Select\u2026</option>
+          <option value="Female">Female</option>
+          <option value="Male">Male</option>
+          <option value="Other">Other</option>
+          <option value="Prefer not to say">Prefer not to say</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="ageInput">Age</label>
         <input type="number" id="ageInput" min="1" max="120" inputmode="numeric" placeholder="e.g. 62">
       </div>
+      <div class="field">
+        <label for="phoneInput">Phone number</label>
+        <input type="tel" id="phoneInput" autocomplete="tel" placeholder="e.g. +91 98765 43210">
+      </div>
+      <p id="introError" style="color:var(--danger-ink,#b42318); font-size:14px; display:none; margin:4px 0 10px;">
+        Please enter your name, age, and phone number to continue.
+      </p>
+
       <button class="btn btn-primary" id="startBtn">Start the screener</button>
       <div class="disclaimer">
         <strong>This tool does not diagnose you.</strong> It's a self-report screening aid, based on the published
@@ -609,11 +643,25 @@ function renderIntro(app){
         are worth discussing with a clinician. It cannot replace an in-person examination, and if any answer suggests
         a possible stroke-related cause, seek emergency care immediately rather than relying on this tool.
       </div>
+      <div class="disclaimer" style="margin-top:10px;">
+        <strong>Your name, age, gender, and phone number will be saved</strong> along with your answers and results
+        so this screening can be reviewed later. Only proceed if you're comfortable with that.
+      </div>
     </div>
   `;
   document.getElementById('startBtn').addEventListener('click', ()=>{
+    const name = document.getElementById('nameInput').value.trim();
+    const gender = document.getElementById('genderInput').value;
     const ageVal = parseInt(document.getElementById('ageInput').value, 10);
-    state.age = isNaN(ageVal) ? null : ageVal;
+    const phone = document.getElementById('phoneInput').value.trim();
+    if(!name || isNaN(ageVal) || !phone){
+      document.getElementById('introError').style.display = 'block';
+      return;
+    }
+    state.name = name;
+    state.gender = gender;
+    state.age = ageVal;
+    state.phone = phone;
     state.screen='question'; state.qIndex=0; render();
   });
 }
@@ -696,6 +744,94 @@ function renderVascularAlert(app){
   });
 }
 
+function slugifyName(name){
+  return (name||'subject')
+    .trim().toLowerCase()
+    .replace(/[^a-z0-9\s-]/g,'')
+    .replace(/\s+/g,'_')
+    .replace(/_+/g,'_')
+    .slice(0,80) || 'subject';
+}
+
+function answerText(q, val){
+  if(val==null) return '\u2014 (not answered)';
+  if(q.type==='yesno') return val===1 ? 'Yes' : 'No';
+  return (q.options && q.options[val-1]) || String(val);
+}
+
+function buildPDF(result){
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ unit:'pt', format:'a4' });
+  const pageW = doc.internal.pageSize.getWidth();
+  const pageH = doc.internal.pageSize.getHeight();
+  const margin = 48;
+  const maxW = pageW - margin*2;
+  let y = margin;
+
+  function ensureRoom(lineHeight){
+    if(y + lineHeight > pageH - margin){ doc.addPage(); y = margin; }
+  }
+  function writeLine(text, opts={}){
+    const size = opts.size || 10;
+    const style = opts.style || 'normal';
+    const gap = opts.gap != null ? opts.gap : size + 4;
+    doc.setFont('helvetica', style);
+    doc.setFontSize(size);
+    const lines = doc.splitTextToSize(text, maxW);
+    lines.forEach(line=>{
+      ensureRoom(gap);
+      doc.text(line, margin, y);
+      y += gap;
+    });
+  }
+  function spacer(h){ y += h; }
+
+  writeLine('Vestibular Symptom Screener \u2014 Results', { size:16, style:'bold', gap:22 });
+  writeLine(`Generated: ${new Date().toLocaleString()}`, { size:9, style:'italic', gap:16 });
+  spacer(6);
+
+  writeLine('Subject information', { size:12, style:'bold', gap:16 });
+  writeLine(`Name: ${state.name || '\u2014'}`);
+  writeLine(`Gender: ${state.gender || '\u2014'}`);
+  writeLine(`Age: ${state.age != null ? state.age : '\u2014'}`);
+  writeLine(`Phone: ${state.phone || '\u2014'}`);
+  spacer(10);
+
+  writeLine('Results', { size:12, style:'bold', gap:16 });
+  if(state.vascularFlagged){
+    writeLine('REMINDER: earlier answers flagged possible stroke-related warning signs. Prompt in-person medical evaluation is recommended regardless of the results below.', { size:9, style:'bold', gap:13 });
+    spacer(4);
+  }
+  const dx1 = result.dx1Final, dx2 = result.dx2Final;
+  [dx1, dx2].filter(Boolean).forEach((dx,i)=>{
+    writeLine(`${i===0?'Most likely':'Also worth discussing'}: ${DX_LABEL[dx]} (matches ${result.scores[dx]}% of ${dx} criteria)`, { size:11, style:'bold', gap:14 });
+    writeLine(DX_DESC[dx], { size:9, gap:12 });
+    spacer(4);
+  });
+  writeLine('All six condition scores:', { size:10, style:'bold', gap:13 });
+  result.ranked.forEach(([c,s])=>{ writeLine(`  ${DX_LABEL[c]}: ${s}%`, { size:9, gap:12 }); });
+  spacer(8);
+  writeLine('This result is computer-generated from a symptom questionnaire and may not be accurate. It is not a diagnosis. Based on the pilot algorithm of Ryu et al., Scientific Reports (2026, n=86), which the study authors note still needs external, multi-center validation before clinical use.', { size:8, style:'italic', gap:11 });
+  spacer(14);
+
+  writeLine('All responses', { size:12, style:'bold', gap:16 });
+  QUESTIONS.forEach(q=>{
+    writeLine(`${q.id}. ${q.text}`, { size:9, style:'bold', gap:12 });
+    writeLine(`Answer: ${answerText(q, state.answers[q.id])}`, { size:9, gap:14 });
+  });
+
+  return doc;
+}
+
+function downloadPDF(result){
+  const doc = buildPDF(result);
+  const slug = slugifyName(state.name);
+  const timestamp = new Date().toISOString().replace(/[:.]/g,'-');
+  const filename = `${timestamp}.pdf`;
+  doc.save(filename);
+  return `results/${slug}/${filename}`;
+}
+
 function renderResults(app){
   const result = classify(state.answers);
   const dx1 = result.dx1Final, dx2 = result.dx2Final;
@@ -716,6 +852,8 @@ function renderResults(app){
   const allScoresRows = result.ranked.map(([c,s])=>`
     <tr><td>${DX_LABEL[c]}</td><td>${s}%</td></tr>`).join('');
 
+  const suggestedPath = `results/${slugifyName(state.name)}/<timestamp>.pdf`;
+
   app.innerHTML = `
     <div class="card">
       <p class="eyebrow">Your results</p>
@@ -733,11 +871,37 @@ function renderResults(app){
         output matched an expert otologist's diagnosis 82.1% of the time; individual disorders varied in accuracy,
         and the study's own authors note it still needs external, multi-center validation before clinical use.
       </div>
-      <button class="btn btn-ghost" id="restartBtn" style="margin-top:18px;">Start over</button>
+
+      <p style="font-size:13px; color:var(--muted,#6b7280); margin-top:18px;">
+        A PDF with all your answers and these results has been downloaded automatically. If your browser blocked it,
+        use the button below.
+      </p>
+      <button class="btn btn-primary" id="downloadBtn">Download results PDF</button>
+      <p id="uploadHint" style="font-size:13px; color:var(--muted,#6b7280); margin-top:8px; display:none;"></p>
+
+      <button class="btn btn-ghost" id="restartBtn" style="margin-top:10px;">Start over</button>
     </div>
   `;
+  function showUploadHint(path){
+    const hint = document.getElementById('uploadHint');
+    hint.style.display = 'block';
+    hint.innerHTML = `To store it in GitHub: open your repo \u2192 Add file \u2192 Upload files \u2192
+      drag in the downloaded PDF \u2192 in the filename box before committing, type the full path
+      <code>${path}</code> so it lands in that subject's folder.`;
+  }
+  if(!state.pdfDownloaded){
+    state.pdfDownloaded = true;
+    const path = downloadPDF(result);
+    showUploadHint(path);
+  }
+  document.getElementById('downloadBtn').addEventListener('click', ()=>{
+    const path = downloadPDF(result);
+    showUploadHint(path);
+  });
   document.getElementById('restartBtn').addEventListener('click', ()=>{
     state.screen='intro'; state.qIndex=0; state.answers={}; state.vascularSeen=false; state.vascularFlagged=false;
+    state.pdfDownloaded=false;
+    state.name=''; state.gender=''; state.age=null; state.phone=''; state.submitStatus='idle';
     render();
   });
 }
