@@ -165,6 +165,16 @@
   footer a{ color:var(--ink-soft); text-decoration:underline; }
 
   .visually-hidden{ position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); }
+
+  /* ---------- Deep-dive (cause / tests / treatment) ---------- */
+  .deepdive-card{ margin-top:18px; }
+  .deepdive-item{ border-top:1px solid var(--surface-alt); padding-top:18px; margin-top:18px; }
+  .deepdive-item:first-child{ border-top:none; padding-top:0; margin-top:0; }
+  .deepdive-name{ font-family:var(--font-display); font-size:20px; font-weight:600; margin:2px 0 12px; color:var(--teal-dark); }
+  .deepdive-rank{ font-family:var(--font-mono); font-size:11px; text-transform:uppercase; letter-spacing:.06em; color:var(--ink-soft); }
+  .deepdive-sub{ margin:14px 0 6px; font-weight:600; font-size:14px; color:var(--ink); display:flex; align-items:center; gap:8px; }
+  .deepdive-sub svg{ width:17px; height:17px; color:var(--teal); flex-shrink:0; }
+  .deepdive-text{ font-size:15px; color:var(--ink-soft); margin:0 0 10px; }
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </head>
@@ -229,6 +239,15 @@
     <symbol id="i-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
       <path d="M4 12l5 5L20 6"/>
     </symbol>
+    <symbol id="i-microscope" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M9 18h7"/><path d="M10.5 18V14.5a3.5 3.5 0 1 1 3-1.7"/><path d="M9 8.5 13.5 4"/><path d="M7 6.5l3 3"/><path d="M4 18h2"/>
+    </symbol>
+    <symbol id="i-flask" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M9 3h6"/><path d="M10 3v6l-5.5 9.5A1.5 1.5 0 0 0 5.8 21h12.4a1.5 1.5 0 0 0 1.3-2.5L14 9V3"/><path d="M7.5 15h9"/>
+    </symbol>
+    <symbol id="i-note" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+      <rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8"/><path d="M8 12h8"/><path d="M8 16h5"/>
+    </symbol>
   </defs>
 </svg>
 
@@ -250,33 +269,8 @@
 <script>
 /* =========================================================================
    QUESTIONS
-   -------------------------------------------------------------------------
-   UPDATED: wording below is now drawn from the paper's own supplementary
-   questionnaire PDF (41598_2026_53480_MOESM1_ESM), which lists the 50
-   items and their answer options but -- crucially -- does NOT label them
-   with Q01..Q50 indices. The scoring engine (rules.js below) keys purely
-   off index + answer-code (1/2/3), per scoring.py/postprocessing.py in
-   the companion repo, so each real question below has been placed at the
-   Q-slot whose documented rule-role it matches by content.
-
-   CONFIDENCE NOTES (read before treating this as verified):
-   - Q03, Q06-Q13, Q20-Q25, Q41, Q42, Q45, Q46 -- high confidence: clear
-     content match, and/or the rule only needs correct SET membership
-     (unordered "count of Yes in this block"), not the exact sub-index.
-   - Q04, Q14-Q19, Q26-Q38, Q43, Q44, Q47-Q50 -- medium confidence:
-     content matched by category and best-guess order. A few
-     postprocessing rules select specific sub-indices *within* a block
-     (e.g. only some headache items feed the vestibular-migraine
-     acceptance rule) rather than treating the whole block symmetrically,
-     so getting every single index exactly right would require the
-     paper's own Q01-Q50 codebook, which this PDF doesn't include.
-   - Q02, Q05, Q39, Q40 -- no confident match found in the supplementary
-     PDF; left as the original reconstructed placeholder text.
-   Treat this build as a substantial accuracy improvement over the prior
-   fully-reconstructed wording, not as a verified official reproduction.
 ========================================================================= */
 const QUESTIONS = [
-  // ---- Universal set (context / character / duration / trigger) --------
   { id:'Q01', cat:'context', icon:'i-context', type:'choice2',
     text:"Did you experience severe dizziness just once, or has it occurred more than twice?",
     options:["Only once","Repeated 2 or more times"] },
@@ -292,7 +286,6 @@ const QUESTIONS = [
     text:"How does your dizziness usually begin?",
     options:["Suddenly, out of nowhere, in a brief attack","When I move or turn my head","Gradually, especially when I stand up or change position"] },
 
-  // ---- Vascular safety screen (evaluated immediately after Q13) --------
   { id:'Q06', cat:'vascular', icon:'i-alert', type:'yesno',
     text:"When dizzy, do you feel especially weak in one arm or leg compared to the other?" },
   { id:'Q07', cat:'vascular', icon:'i-alert', type:'yesno',
@@ -310,7 +303,6 @@ const QUESTIONS = [
   { id:'Q13', cat:'vascular', icon:'i-alert', type:'yesno',
     text:"When dizzy, do you ever see double?" },
 
-  // ---- Chronic / motion & visual sensitivity cluster (PPPD-leaning) ----
   { id:'Q14', cat:'chronic', icon:'i-balance', type:'yesno',
     text:"Does consistent dizziness make everyday activities (like shopping, work, etc.) difficult?" },
   { id:'Q15', cat:'chronic', icon:'i-eye', type:'yesno',
@@ -324,7 +316,6 @@ const QUESTIONS = [
   { id:'Q19', cat:'chronic', icon:'i-eye', type:'yesno',
     text:"Does dizziness worsen when riding in vehicles or other forms of transportation?" },
 
-  // ---- Meniere's-leaning ear symptoms ------------------------------------
   { id:'Q20', cat:'ear', icon:'i-ear', type:'yesno',
     text:"When very dizzy, do you hear less in one ear?" },
   { id:'Q21', cat:'ear', icon:'i-ear', type:'yesno',
@@ -332,13 +323,11 @@ const QUESTIONS = [
   { id:'Q22', cat:'ear', icon:'i-ear', type:'yesno',
     text:"When very dizzy, does one ear feel more blocked?" },
 
-  // ---- BPPV positional triggers -----------------------------------------
   { id:'Q23', cat:'positional', icon:'i-bed', type:'yesno',
     text:"Does turning over while lying down make the dizziness worse?" },
   { id:'Q24', cat:'positional', icon:'i-tilt', type:'yesno',
     text:"Does lying down from a sitting position make the dizziness worse?" },
 
-  // ---- Headache / vestibular migraine block (gated by Q25) --------------
   { id:'Q25', cat:'headache', icon:'i-headache', type:'yesno',
     text:"Do you experience headaches?" },
   { id:'Q26', cat:'headache', icon:'i-headache', type:'choice3',
@@ -376,7 +365,6 @@ const QUESTIONS = [
   { id:'Q40', cat:'headache', icon:'i-trigger', type:'yesno',
     text:"Do you have a personal or family history of motion sickness since childhood?" },
 
-  // ---- Peripheral vestibulopathy (VEST) specific -------------------------
   { id:'Q41', cat:'vest', icon:'i-vest', type:'yesno',
     text:"Do you find it difficult to maintain your balance when standing straight, walking, or moving?" },
   { id:'Q42', cat:'vest', icon:'i-eye', type:'yesno',
@@ -386,7 +374,6 @@ const QUESTIONS = [
   { id:'Q44', cat:'vest', icon:'i-pill', type:'yesno',
     text:"Do you feel dizzy even when sitting still or lying down?" },
 
-  // ---- Orthostatic dizziness (OH) specific -------------------------------
   { id:'Q45', cat:'orthostatic', icon:'i-stand', type:'yesno',
     text:"Do you feel dizzy when suddenly standing up after sitting for a long time?" },
   { id:'Q46', cat:'orthostatic', icon:'i-clock', type:'yesno',
@@ -404,9 +391,6 @@ const QUESTIONS = [
 
 /* =========================================================================
    LANGUAGE SUPPORT
-   -------------------------------------------------------------------------
-   English and Hindi share the same question IDs, option order, and scoring
-   codes. Only presentation text is translated.
 ========================================================================= */
 const I18N = {
   en: {
@@ -472,7 +456,13 @@ const I18N = {
     allResponses: "All responses",
     matchesOf: "matches",
     algorithmNote: "This result is computer-generated from a symptom questionnaire and may not be accurate. It is not a diagnosis. Based on the pilot algorithm of Ryu et al., Scientific Reports (2026, n=86), which the study authors note still needs external, multi-center validation before clinical use.",
-    pdfTitle: "Vestibular Symptom Screener — Results"
+    pdfTitle: "Vestibular Symptom Screener — Results",
+    deepdiveTitle: "Understanding your top possibilities",
+    deepdiveIntro: "For each of your top matches: a plain-language explanation of what commonly causes it, the tests a clinician typically uses to confirm or rule it out, and the treatment approaches generally used. This is general educational information, not a treatment plan — your clinician will confirm the diagnosis and tailor any treatment to you.",
+    possibleCause: "Possible cause",
+    furtherTests: "Tests to confirm or rule out",
+    treatmentOptions: "Typical treatment approaches",
+    deepdiveDisclaimer: "This section describes options generally used for these conditions in clinical practice — it is not personalized medical advice and does not account for your other health conditions, allergies, or medications. Only a qualified clinician can confirm a diagnosis and prescribe or recommend treatment for you."
   },
 
   hi: {
@@ -538,7 +528,13 @@ const I18N = {
     allResponses: "सभी उत्तर",
     matchesOf: "मेल",
     algorithmNote: "यह परिणाम लक्षणों की प्रश्नावली से कंप्यूटर द्वारा तैयार किया गया है और पूरी तरह सटीक नहीं हो सकता। यह निदान नहीं है। यह Ryu आदि के Scientific Reports (2026, n=86) के पायलट एल्गोरिद्म पर आधारित है। अध्ययन के लेखकों के अनुसार नैदानिक उपयोग से पहले बाहरी, बहु-केंद्र सत्यापन अभी आवश्यक है।",
-    pdfTitle: "वेस्टिब्युलर लक्षण स्क्रीनर — परिणाम"
+    pdfTitle: "वेस्टिब्युलर लक्षण स्क्रीनर — परिणाम",
+    deepdiveTitle: "आपकी शीर्ष संभावनाओं को समझना",
+    deepdiveIntro: "आपके शीर्ष मेल खाने वाले परिणामों में से प्रत्येक के लिए: सरल भाषा में यह बताया गया है कि इसका सामान्य कारण क्या होता है, इसकी पुष्टि या खंडन के लिए चिकित्सक आमतौर पर कौन-से परीक्षण करते हैं, और आमतौर पर किस प्रकार का उपचार अपनाया जाता है। यह केवल सामान्य शैक्षिक जानकारी है, उपचार योजना नहीं — निदान की पुष्टि और आपके लिए उपयुक्त उपचार का निर्णय आपका चिकित्सक ही करेगा।",
+    possibleCause: "संभावित कारण",
+    furtherTests: "पुष्टि या खंडन के लिए परीक्षण",
+    treatmentOptions: "सामान्यतः अपनाए जाने वाले उपचार",
+    deepdiveDisclaimer: "यह भाग इन स्थितियों के लिए चिकित्सकीय अभ्यास में सामान्यतः उपयोग किए जाने वाले विकल्पों का वर्णन करता है — यह व्यक्तिगत चिकित्सकीय सलाह नहीं है और आपकी अन्य स्वास्थ्य स्थितियों, एलर्जी या दवाओं को ध्यान में नहीं रखता। केवल एक योग्य चिकित्सक ही निदान की पुष्टि कर सकता है और आपके लिए उपचार सुझा या निर्धारित कर सकता है।"
   }
 };
 
@@ -632,10 +628,38 @@ const DX_DESC_HI = {
   OH:"खड़े होने पर रक्तचाप में कमी के कारण हल्का चक्कर या बेहोशी जैसा महसूस होना, जो बैठने या लेटने पर जल्दी कम हो जाता है। यह दवाओं, शरीर में पानी की कमी या किसी अन्य अंतर्निहित स्थिति से संबंधित हो सकता है।"
 };
 
+const DX_CAUSE_HI = {
+  BPPV:"आंतरिक कान की अर्धवृत्ताकार नलिकाओं में कैल्शियम कार्बोनेट के छोटे कण (ओटोकोनिया) अपनी जगह से हट जाते हैं। अधिकतर मामलों में कारण स्पष्ट नहीं होता, लेकिन यह सिर पर चोट, लंबे समय तक बिस्तर पर रहने या कान की सर्जरी के बाद भी हो सकता है।",
+  MD:"आंतरिक कान में द्रव (एंडोलिम्फ) के असामान्य जमाव और दबाव में बदलाव (एंडोलिम्फेटिक हाइड्रोप्स) से संबंधित माना जाता है; सटीक कारण अक्सर अज्ञात रहता है।",
+  VM:"माना जाता है कि इसमें माइग्रेन सिरदर्द जैसी ही तंत्रिका संबंधी प्रक्रियाएँ शामिल होती हैं, जो मस्तिष्क के संतुलन और गति को प्रोसेस करने वाले मार्गों को प्रभावित करती हैं।",
+  PPPD:"यह एक कार्यात्मक (functional) विकार है जो अक्सर किसी शुरुआती वेस्टिब्युलर या संतुलन-संबंधी घटना के बाद विकसित होता है; इसमें आंतरिक कान की चल रही क्षति के बजाय मस्तिष्क द्वारा संतुलन और दृश्य/गति संबंधी जानकारी को प्रोसेस करने के तरीके में बदलाव माना जाता है।",
+  VEST:"आंतरिक कान के संतुलन अंग की घटी हुई कार्यक्षमता, जो अक्सर किसी पूर्व वायरल संक्रमण (वेस्टिब्युलर न्यूराइटिस), कुछ दवाओं (कान के लिए हानिकारक दवाएँ) या अज्ञात कारणों से होती है।",
+  OH:"खड़े होने पर रक्तचाप में गिरावट, जो शरीर में पानी की कमी, कुछ दवाओं (रक्तचाप या हृदय की दवाएँ), लंबे समय तक बिस्तर पर रहने, या स्वायत्त तंत्रिका तंत्र से जुड़ी किसी अंतर्निहित स्थिति के कारण हो सकती है।"
+};
+const DX_TESTS_HI = {
+  BPPV:"प्रभावित नलिका की पहचान के लिए डिक्स-हॉलपाइक परीक्षण और सुपाइन रोल परीक्षण; निदान अस्पष्ट रहने पर वीडियोनिस्टैग्मोग्राफी (VNG)।",
+  MD:"उतार-चढ़ाव वाली निम्न-आवृत्ति श्रवण हानि दर्ज करने के लिए ऑडियोमेट्री (श्रवण परीक्षण); अन्य कारणों (जैसे एकॉस्टिक न्यूरोमा) को खारिज करने के लिए इलेक्ट्रोकोक्लियोग्राफी या आंतरिक श्रवण नलिका की MRI।",
+  VM:"ICHD-3/Barany Society मानदंडों के आधार पर मुख्यतः चिकित्सकीय निदान; अन्य तंत्रिका संबंधी कारणों को खारिज करने के लिए मस्तिष्क की MRI; असामान्य लक्षण होने पर वेस्टिब्युलर कार्यक्षमता परीक्षण।",
+  PPPD:"सक्रिय वेस्टिब्युलर, तंत्रिका संबंधी या मानसिक कारणों को खारिज करने के बाद मुख्यतः चिकित्सकीय निदान; यह पुष्टि करने के लिए वेस्टिब्युलर और संतुलन परीक्षण कि कोई सक्रिय आंतरिक कान की समस्या नहीं है।",
+  VEST:"आंतरिक कान की संतुलन कार्यक्षमता मापने के लिए वीडियोनिस्टैग्मोग्राफी (VNG), वीडियो हेड इम्पल्स टेस्ट (vHIT), और कैलोरिक परीक्षण; सुनने की क्षमता जाँचने के लिए ऑडियोमेट्री।",
+  OH:"लेटे, बैठे और खड़े होने की स्थिति में रक्तचाप व हृदय गति की माप; अस्पष्ट मामलों में टिल्ट-टेबल परीक्षण; एनीमिया, पानी की कमी या हार्मोनल कारणों की जाँच के लिए रक्त परीक्षण।"
+};
+const DX_TREATMENT_HI = {
+  BPPV:"किसी प्रशिक्षित चिकित्सक द्वारा किया गया कैनालिथ रीपोज़िशनिंग मैनुवर (जैसे एप्ले, सेमोंट या बार्बेक्यू रोल); वेस्टिब्युलर पुनर्वास व्यायाम। वेस्टिब्युलर-दबाने वाली दवाओं का उपयोग आमतौर पर हतोत्साहित किया जाता है क्योंकि इससे स्वाभाविक रिकवरी में देरी हो सकती है।",
+  MD:"नमक कम करने वाला आहार और मूत्रवर्धक दवाएँ (diuretics) द्रव के दबाव को कम करने के लिए; तीव्र दौरे के दौरान वेस्टिब्युलर-दबाने वाली दवाएँ; लगातार बने रहने वाले मामलों में इंट्राटिम्पैनिक स्टेरॉयड या जेंटामाइसिन इंजेक्शन, या सर्जिकल विकल्प (एंडोलिम्फेटिक सैक डीकंप्रेशन, लैबिरिंथेक्टॉमी) पर विचार किया जा सकता है।",
+  VM:"चिकित्सक द्वारा निर्धारित माइग्रेन-रोकथाम दवाएँ (जैसे बीटा ब्लॉकर, कुछ एंटीडिप्रेसेंट या एंटीकनवल्सेंट); जीवनशैली/ट्रिगर प्रबंधन (नींद, हाइड्रेशन, तनाव, आहार संबंधी ट्रिगर); वेस्टिब्युलर पुनर्वास चिकित्सा।",
+  PPPD:"PPPD के अनुरूप बनाई गई वेस्टिब्युलर पुनर्वास चिकित्सा; कुछ SSRI/SNRI दवाएँ; कॉग्निटिव बिहेवियरल थेरेपी (CBT); ट्रिगर करने वाले दृश्य/गति वातावरण में धीरे-धीरे पुनः शामिल होना।",
+  VEST:"वेस्टिब्युलर पुनर्वास चिकित्सा (मुख्य उपचार) जो मस्तिष्क को अनुकूलित होने में मदद करती है; किसी भी अंतर्निहित कारण का समाधान (जैसे कान के लिए हानिकारक दवा को रोकना); संतुलन और चाल-प्रशिक्षण।",
+  OH:"(यदि उपयुक्त हो तो) तरल पदार्थ और नमक का सेवन बढ़ाना; चिकित्सक के साथ मिलकर दवाओं की समीक्षा और समायोजन; कम्प्रेशन स्टॉकिंग्स; स्थिति धीरे-धीरे बदलना; पहचाने गए किसी भी अंतर्निहित कारण का उपचार।"
+};
+
 function t(key){ return I18N[state.language][key] || I18N.en[key] || key; }
 function currentCategoryLabel(cat){ return state.language==='hi' ? CATEGORY_LABEL_HI[cat] : CATEGORY_LABEL_EN[cat]; }
 function currentDxLabel(dx){ return state.language==='hi' ? DX_LABEL_HI[dx] : DX_LABEL[dx]; }
 function currentDxDesc(dx){ return state.language==='hi' ? DX_DESC_HI[dx] : DX_DESC[dx]; }
+function currentDxCause(dx){ return state.language==='hi' ? DX_CAUSE_HI[dx] : DX_CAUSE[dx]; }
+function currentDxTests(dx){ return state.language==='hi' ? DX_TESTS_HI[dx] : DX_TESTS[dx]; }
+function currentDxTreatment(dx){ return state.language==='hi' ? DX_TREATMENT_HI[dx] : DX_TREATMENT[dx]; }
 
 function localizedQuestion(q){
   if(state.language==='en') return { ...q, options:q.options };
@@ -649,12 +673,6 @@ const CATEGORY_LABEL = CATEGORY_LABEL_EN;
 
 /* =========================================================================
    RULES ENGINE
-   -------------------------------------------------------------------------
-   Direct port of scoring.py / postprocessing.py / vascular.py from
-   github.com/cecy07/vestibular-classifier (MIT licensed, companion code
-   to the paper). Coefficients below match configs/coefficients.yaml
-   exactly; rule logic matches the Python control flow exactly, including
-   its order-dependence.
 ========================================================================= */
 const COEFF = {
   xBPPV_1:28, xBPPV_2:19, xBPPV_3:22, xBPPV_4:58,
@@ -683,7 +701,32 @@ const DX_DESC = {
   OH:"A drop in blood pressure on standing, causing lightheadedness or a near-fainting feeling that improves quickly when sitting or lying down. Can relate to medications, dehydration, or an underlying condition.",
 };
 
-function scoreSubject(a){ // a = answers object, e.g. {Q01:1, Q02:2, ...} (1-indexed option values)
+const DX_CAUSE = {
+  BPPV:"Small calcium carbonate crystals (otoconia) that normally sit in the utricle become dislodged and drift into one of the semicircular canals. Most cases have no identifiable trigger, though it can follow a head injury, prolonged bed rest, or ear surgery.",
+  MD:"Thought to relate to an abnormal build-up of fluid (endolymph) and pressure changes within the inner ear (\"endolymphatic hydrops\"); the exact underlying cause is often unknown.",
+  VM:"Believed to involve the same neurological mechanisms as migraine, affecting the brain pathways that process balance, motion, and sensory input — rather than a problem in the inner ear itself.",
+  PPPD:"A functional balance disorder that commonly develops after an initial vestibular event (like BPPV, vestibular neuritis, or even a panic episode), even after that original problem has resolved; it reflects the brain's altered processing of balance and visual/motion cues rather than ongoing ear damage.",
+  VEST:"Reduced function of the balance organ in one or both inner ears — often following a viral infection (vestibular neuritis/labyrinthitis), certain ototoxic medications, or sometimes with no identifiable cause.",
+  OH:"A drop in blood pressure on standing, which can result from dehydration, certain medications (blood pressure or heart medicines), prolonged bed rest, or an underlying condition affecting the autonomic nervous system.",
+};
+const DX_TESTS = {
+  BPPV:"Dix-Hallpike maneuver and supine roll test to identify the affected ear/canal; videonystagmography (VNG) if the diagnosis remains unclear after bedside testing.",
+  MD:"Audiometry (hearing test) to document fluctuating low-frequency hearing loss; MRI of the internal auditory canals to rule out other causes such as an acoustic neuroma; sometimes electrocochleography.",
+  VM:"Largely a clinical diagnosis based on history and established criteria (ICHD-3 / Bárány Society); brain MRI may be used to exclude other neurological causes; vestibular function testing if the presentation is atypical.",
+  PPPD:"Primarily a clinical diagnosis made after ruling out an ongoing active vestibular, neurological, or psychiatric cause; vestibular and balance testing (VNG, vHIT) to confirm there's no persistent peripheral problem.",
+  VEST:"Videonystagmography (VNG), video head impulse test (vHIT), and caloric testing to measure inner-ear balance function; audiometry to check whether hearing is also affected.",
+  OH:"Orthostatic blood pressure and heart rate measurements taken lying, sitting, and standing; tilt-table testing if the diagnosis is unclear; blood tests to check for anemia, dehydration, or an endocrine cause.",
+};
+const DX_TREATMENT = {
+  BPPV:"Canalith repositioning maneuvers (e.g. Epley, Semont, or Barbecue roll) performed by a trained clinician — usually very effective; vestibular rehabilitation exercises for residual unsteadiness. Vestibular-suppressant medication is generally discouraged since it can slow natural recovery.",
+  MD:"A low-salt diet and diuretics to reduce inner-ear fluid pressure; anti-vertigo medication for acute attacks; for cases that don't respond, a clinician may consider intratympanic steroid or gentamicin injections, or, less commonly, surgical options.",
+  VM:"Migraine-preventive medication prescribed by a physician (e.g. certain beta blockers, antidepressants, or anticonvulsants); identifying and managing personal triggers (sleep, hydration, stress, specific foods); vestibular rehabilitation therapy.",
+  PPPD:"Vestibular rehabilitation therapy tailored to PPPD; certain SSRI/SNRI medications prescribed by a physician; cognitive behavioral therapy (CBT); gradual, structured reintroduction to the visual/motion environments that trigger symptoms.",
+  VEST:"Vestibular rehabilitation therapy is the mainstay of treatment, helping the brain compensate for reduced inner-ear input; addressing any underlying cause (such as stopping an ototoxic medication); balance and gait training.",
+  OH:"Increasing fluid and salt intake if appropriate for the person; reviewing and adjusting any contributing medications with a doctor; compression stockings; standing up slowly and in stages; treating any underlying cause that's identified.",
+};
+
+function scoreSubject(a){
   let w = { BPPV:1.0, MD:1.0, VM:1.0, PPPD:1.0, VEST:1.0, OH:1.0 };
   const yes = (q)=> a[q]===1;
   const cnt = (qs)=> qs.reduce((s,q)=> s + (yes(q)?1:0), 0);
@@ -745,7 +788,6 @@ function applyPostprocessing(a, dx1, dx2){
   const cntNo=(qs)=> qs.reduce((s,q)=>s+(no(q)?1:0),0);
   const cntYes=(qs)=> qs.reduce((s,q)=>s+(yes(q)?1:0),0);
 
-  // --- Rejections (fixed order) ---
   if(cntNo(['Q14','Q15','Q16','Q17','Q18','Q19','Q20']) >= 4) clear('PPPD');
 
   if(a.Q03!==2 && a.Q04!==1 && a.Q20!==1 && a.Q21!==1 && a.Q22!==1) clear('MD');
@@ -764,10 +806,8 @@ function applyPostprocessing(a, dx1, dx2){
 
   if(yes('Q45') && yes('Q47') && yes('Q48')) clear('OH');
 
-  // --- Promote empty Dx1 <- Dx2 ---
   if(d1===''){ d1=d2; d2=''; }
 
-  // --- Acceptances (fixed order) ---
   if(cntYes(['Q35','Q37','Q38','Q28','Q32']) >= 3) insert('VM');
 
   if((a.Q05===1 || a.Q05===2) && a.Q04!==3) insert('VEST');
@@ -785,7 +825,6 @@ function applyPostprocessing(a, dx1, dx2){
 }
 
 function vascularScreen(a){
-  // Eq. 1 of the paper: fires when >= threshold of these are "Yes".
   const qs = ['Q06','Q07','Q08','Q13'];
   const count = qs.reduce((s,q)=> s + (a[q]===1?1:0), 0);
   return { flagged: count >= 2, count };
@@ -802,7 +841,6 @@ function classify(a){
 ========================================================================= */
 const state = { screen:'language', language:'en', qIndex:0, answers:{}, age:null, name:'', gender:'', phone:'', vascularSeen:false, vascularFlagged:false, pdfDownloaded:false };
 
-// ---- Local results file (download-and-upload workflow, no backend) -------
 function slugifyName(name){
   return (name||'subject')
     .trim().toLowerCase()
@@ -812,7 +850,7 @@ function slugifyName(name){
     .slice(0,80) || 'subject';
 }
 
-const VASC_LAST_INDEX = QUESTIONS.findIndex(q=>q.id==='Q13'); // interrupt check happens right after this
+const VASC_LAST_INDEX = QUESTIONS.findIndex(q=>q.id==='Q13');
 
 function iconSvg(id, size=34){
   return `<svg width="${size}" height="${size}" viewBox="0 0 24 24"><use href="#${id}"/></svg>`;
@@ -827,9 +865,7 @@ function updateBeam(){
   let frac=0, text=state.language==='hi' ? 'शुरू नहीं हुआ' : 'Not started';
   if(state.screen==='question'){
     frac = state.qIndex/QUESTIONS.length;
-    text = state.language==='hi'
-      ? `${t('question')} ${state.qIndex+1} ${t('of')} ${QUESTIONS.length}`
-      : `${t('question')} ${state.qIndex+1} ${t('of')} ${QUESTIONS.length}`;
+    text = `${t('question')} ${state.qIndex+1} ${t('of')} ${QUESTIONS.length}`;
   } else if(state.screen==='results'){
     frac = 1; text = state.language==='hi' ? 'पूर्ण' : 'Complete';
   } else if(state.screen==='vascular-alert'){
@@ -857,7 +893,6 @@ function render(){
   if(state.screen==='vascular-alert') return renderVascularAlert(app);
   if(state.screen==='results') return renderResults(app);
 }
-
 
 function renderLanguage(app){
   app.innerHTML = `
@@ -1042,8 +1077,6 @@ async function ensureHindiFont(doc){
         doc.addFont('NotoSansDevanagari-Regular.ttf', 'NotoSansDevanagari', 'normal');
       });
   } else {
-    // The cached promise is tied to the first document, so the font still
-    // needs to be added to a new jsPDF instance. Fetch again for simplicity.
     hindiFontPromise = null;
     return ensureHindiFont(doc);
   }
@@ -1111,6 +1144,20 @@ async function buildPDF(result){
   writeLine(t('algorithmNote'), { size:8, style:'italic', gap:11 });
   spacer(14);
 
+  const top3 = result.ranked.slice(0,3);
+  writeLine(t('deepdiveTitle'), { size:12, style:'bold', gap:16 });
+  writeLine(t('deepdiveIntro'), { size:9, gap:12 });
+  spacer(4);
+  top3.forEach(([dx,score],i)=>{
+    writeLine(`${i+1}. ${currentDxLabel(dx)} (${score}%)`, { size:10.5, style:'bold', gap:14 });
+    writeLine(`${t('possibleCause')}: ${currentDxCause(dx)}`, { size:9, gap:12 });
+    writeLine(`${t('furtherTests')}: ${currentDxTests(dx)}`, { size:9, gap:12 });
+    writeLine(`${t('treatmentOptions')}: ${currentDxTreatment(dx)}`, { size:9, gap:12 });
+    spacer(4);
+  });
+  writeLine(t('deepdiveDisclaimer'), { size:8, style:'italic', gap:11 });
+  spacer(14);
+
   writeLine(t('allResponses'), { size:12, style:'bold', gap:16 });
   QUESTIONS.forEach(q=>{
     const lq = localizedQuestion(q);
@@ -1128,6 +1175,36 @@ async function downloadPDF(result){
   const filename = `${timestamp}.pdf`;
   doc.save(filename);
   return `results/${slug}/${filename}`;
+}
+
+function renderDeepDive(result){
+  const top3 = result.ranked.slice(0,3);
+  const items = top3.map(([dx,score],i)=>`
+    <div class="deepdive-item">
+      <div class="deepdive-rank">${i===0?t('mostLikely'):(i===1?t('alsoDiscuss'):'#3')}</div>
+      <div class="deepdive-name">${currentDxLabel(dx)} · ${score}%</div>
+
+      <div class="deepdive-sub">${iconSvg('i-flask',17)}${t('possibleCause')}</div>
+      <p class="deepdive-text">${currentDxCause(dx)}</p>
+
+      <div class="deepdive-sub">${iconSvg('i-microscope',17)}${t('furtherTests')}</div>
+      <p class="deepdive-text">${currentDxTests(dx)}</p>
+
+      <div class="deepdive-sub">${iconSvg('i-note',17)}${t('treatmentOptions')}</div>
+      <p class="deepdive-text">${currentDxTreatment(dx)}</p>
+    </div>
+  `).join('');
+
+  return `
+    <div class="card deepdive-card">
+      <p class="eyebrow">${t('deepdiveTitle')}</p>
+      <p class="lede">${t('deepdiveIntro')}</p>
+      ${items}
+      <div class="disclaimer" style="margin-top:22px;">
+        ${t('deepdiveDisclaimer')}
+      </div>
+    </div>
+  `;
 }
 
 async function renderResults(app){
@@ -1148,8 +1225,6 @@ async function renderResults(app){
 
   const allScoresRows = result.ranked.map(([c,s])=>`
     <tr><td>${currentDxLabel(c)}</td><td>${s}%</td></tr>`).join('');
-
-  const suggestedPath = `results/${slugifyName(state.name)}/<timestamp>.pdf`;
 
   app.innerHTML = `
     <div class="card">
@@ -1174,6 +1249,7 @@ async function renderResults(app){
 
       <button class="btn btn-ghost" id="restartBtn" style="margin-top:10px;">${t('startOver')}</button>
     </div>
+    ${renderDeepDive(result)}
   `;
 
   async function showUploadHint(path){
@@ -1229,6 +1305,7 @@ render();
     Scoring logic ported from the companion repository,
     <a href="https://github.com/cecy07/vestibular-classifier" target="_blank" rel="noopener">cecy07/vestibular-classifier</a> (MIT license).
     This independent web implementation is offered for educational purposes and has not itself been clinically validated.
+    The possible-cause, testing, and treatment information added for each condition is general medical background drawn from standard clinical references, not from the source paper, and is provided for education only.
   </span>
   <span id="footerHi" style="display:none;">
     यह स्क्रीनिंग Ryu, H.T., Callejas&nbsp;Pastor, C.A., Joo, J.S., Ku, Y. एवं Suh, M.-W. द्वारा प्रकाशित नियम-आधारित एल्गोरिद्म पर आधारित है:
@@ -1237,6 +1314,7 @@ render();
     स्कोरिंग लॉजिक संबंधित
     <a href="https://github.com/cecy07/vestibular-classifier" target="_blank" rel="noopener">cecy07/vestibular-classifier</a> रिपॉज़िटरी (MIT लाइसेंस) से लिया गया है।
     यह स्वतंत्र वेब कार्यान्वयन केवल शैक्षिक उद्देश्यों के लिए है और स्वयं क्लिनिकल रूप से मान्य नहीं किया गया है।
+    प्रत्येक स्थिति के लिए जोड़ी गई संभावित कारण, परीक्षण और उपचार संबंधी जानकारी सामान्य चिकित्सकीय संदर्भों पर आधारित है, मूल शोध-पत्र पर नहीं, और केवल शैक्षिक उद्देश्य के लिए है।
   </span>
 </footer>
 
